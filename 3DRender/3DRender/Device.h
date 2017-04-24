@@ -17,6 +17,10 @@ public:
 	int renderState;
 	UINT background;		//±³¾°ÑÕÉ«
 	UINT foreground;		//Ïß¿òÑÕÉ«
+	int clipMaxX;
+	int clipMaxY;
+	int clipMinX;	
+	int clipMinY;
 
 public:
 	Device(int width, int height, void *frameBuffer, int renderState, UINT foreground, UINT background)
@@ -35,6 +39,10 @@ public:
 		this->renderState = renderState;
 		this->foreground = foreground;
 		this->background = background;
+		this->clipMinX = 0;
+		this->clipMinY = 0;
+		this->clipMaxX = width;
+		this->clipMaxY = height;			
 	}
 	void Destroy()
 	{
@@ -48,10 +56,22 @@ public:
 	{
 		memset(frameBuffer, 0, sizeof(UINT)* width * height);
 	}
+	//ÉèÖÃ²Ã¼ôÇøÓò
+	void SetClip(int clipMinX, int clipMinY, int clipMaxX, int clipMaxY)
+	{
+		this->clipMaxX = clipMaxX;
+		this->clipMaxY = clipMaxY;
+		this->clipMinX = clipMinX;
+		this->clipMinY = clipMinY;
+	}
 	//»­µã
 	void DrawPoint(int x, int y, UINT color)
 	{
-		frameBuffer[x + y * width] = color;
+		if (x < clipMinX || x >= clipMaxX || y < clipMinY || y >= clipMaxY)
+		{
+			return;
+		}
+		frameBuffer[(UINT)x + (UINT)y * (UINT)width] = color;
 	}
 	//»­Ïß
 	void DrawLine(int x1, int y1, int x2, int y2, UINT color)
@@ -270,10 +290,10 @@ public:
 	void Render()
 	{
 		Clear();
-		Point2D p1 = { 30, 250 };
+		Point2D p1 = { -30, 250 };
 		Point2D p2 = { 110, 350 };
-		Point2D p3 = { 200, 220 };
-		DrawTriangle(p1, p2, p3, foreground);
+		Point2D p3 = { 200, -220 };
+		SetClip(60, 70, 500, 500);
 		DrawTriangle(p1, p2, p3, foreground);
 	}
 };
