@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "3DRender.h"
 #include "Device.h"
+#include "Camera.h"
 
 
 //屏幕宽度和高度   
@@ -25,7 +26,10 @@ BITMAPINFO binfo; //BITMAPINFO结构体
 
 //视频缓存
 UINT Buffer[SCREEN_WIDTH*SCREEN_HEIGHT];
+//渲染装置
 Device *device;
+//相机
+UVNCamera *camera;
 
 // 此代码模块中包含的函数的前向声明: 
 ATOM				MyRegisterClass(HINSTANCE hInstance);
@@ -209,12 +213,18 @@ void RenderMain()
 
 void RenderInit()
 {
-	device = new Device(SCREEN_WIDTH, SCREEN_HEIGHT, Buffer, RENDER_STATE_COLOR, 0xFFFFFFFF, 0xFFFF0000);
+	Point3D camerPos = { 0, 0, 0, 1 };
+	Vector3D u = { 1, 0, 0, 0 };
+	Vector3D v = { 0, 1, 0, 0 };
+	Vector3D n = { 0, 0, 1, 0 };
+	camera = new UVNCamera(camerPos, u, v, n, 2, 4, 90, 100);
+	device = new Device(camera, SCREEN_WIDTH, SCREEN_HEIGHT, Buffer, RENDER_STATE_WIREFRAME, 0xFFFFFFFF, 0xFFFF0000);
 }
 
 void RenderEnd()
 {
 	delete device;
+	delete camera;
 }
 
 void Display()

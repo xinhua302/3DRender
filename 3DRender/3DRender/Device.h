@@ -4,57 +4,81 @@
 #ifndef DEVICE_H
 #define DEVICE_H
 #include "3DMath.h"
+#include "Camera.h"
+#include "GeometryDefine .h"
 
 const int RENDER_STATE_WIREFRAME = 1;	// 渲染线框
-const int RENDER_STATE_COLOR = 2;		// 渲染纹理
+const int RENDER_STATE_COLOR = 2;		// 渲染颜色
 
 class Device
 {
 public:
-	int width;
-	int height;
-	UINT *frameBuffer;		//图像缓存
-	int renderState;
-	UINT background;		//背景颜色
-	UINT foreground;		//线框颜色
-	int clipMaxX;
-	int clipMaxY;
-	int clipMinX;	
-	int clipMinY;
+	//渲染主函数
+	void Render()
+	{
+		Clear();
+		/*Point2D p1 = { -30, 250 };
+		Point2D p2 = { 110, 350 };
+		Point2D p3 = { 200, -220 };
+		SetClip(60, 70, 500, 500);
+		DrawTriangle(p1, p2, p3, foreground);*/
 
-public:
-	Device(int width, int height, void *frameBuffer, int renderState, UINT foreground, UINT background)
-	{
-		Init(width, height, frameBuffer, renderState, foreground, background);
-	}
-	~Device()
-	{
-		
-	}
-	void Init(int width, int height, void *frameBuffer, int renderState, UINT foreground, UINT background)
-	{
-		this->width = width;
-		this->height = height;
-		this->frameBuffer = (UINT*)frameBuffer;
-		this->renderState = renderState;
-		this->foreground = foreground;
-		this->background = background;
-		this->clipMinX = 0;
-		this->clipMinY = 0;
-		this->clipMaxX = width;
-		this->clipMaxY = height;			
-	}
-	void Destroy()
-	{
-		if (frameBuffer != nullptr)
-		{
-			delete frameBuffer;
-			frameBuffer = nullptr;
-		}
+		//正方体
+		Point3D mesh[8] = {
+			{ 100, -100, 100, 1},
+			{-100, -100, 100, 1},
+			{-100,  100, 100, 1},
+			{ 100,  100, 100, 1},
+			{ 100, -100, -100, 1},
+			{-100, -100, -100, 1},
+			{-100,  100, -100, 1},
+			{ 100,  100, -100, 1},
+		};
+
+		Triangle t1(mesh[0], mesh[1], mesh[2]);
+		Triangle t2(mesh[2], mesh[3], mesh[1]);
+
+		Triangle t3(mesh[4], mesh[5], mesh[6]);
+		Triangle t4(mesh[6], mesh[7], mesh[4]);
+
+		Triangle t5(mesh[0], mesh[4], mesh[7]);
+		Triangle t6(mesh[7], mesh[3], mesh[0 ]);
+
+		Triangle t7(mesh[1], mesh[5], mesh[6]);
+		Triangle t8(mesh[6], mesh[2], mesh[1]);
+
+		Triangle t9(mesh[0], mesh[1], mesh[5]);
+		Triangle t10(mesh[5], mesh[4], mesh[0]);
+
+		Triangle t11(mesh[3], mesh[2], mesh[6]);
+		Triangle t12(mesh[6], mesh[7], mesh[3]);
+
+		Triangle list[12] = { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12 };
+
+		Objecet *object = new Objecet({ 400,400,200,1 }, 12, list);
+		AddObjectList(object);
+		LocalToWorld();
+		WorldToCamera();
+		Projection();
+		RenderObject();
+		delete object;
+		ClearObjectList();
+
+
+
 	}
 	void Clear()
 	{
 		memset(frameBuffer, 0, sizeof(UINT)* width * height);
+	}
+public:
+	Device(UVNCamera *camera, int width, int height, void *frameBuffer, int renderState, UINT foreground, UINT background)
+	{
+		Init(camera, width, height, frameBuffer, renderState, foreground, background);
+	}
+	~Device()
+	{
+
 	}
 	//设置裁剪区域
 	void SetClip(int clipMinX, int clipMinY, int clipMaxX, int clipMaxY)
@@ -145,7 +169,7 @@ public:
 	}
 	//画三角形
 	void DrawTriangle(const Point2D &p1, const Point2D &p2, const Point2D &p3, UINT color)
-	{	
+	{
 		if (RENDER_STATE_WIREFRAME == renderState)
 		{
 			DrawLine(p1, p2, color);
@@ -204,6 +228,13 @@ public:
 			}
 		}
 	}
+	void DrawTriangle(const Triangle &triangle, UINT color)
+	{
+		Point2D p1 = { (int)triangle.newPos[0].x, (int)triangle.newPos[0].y };
+		Point2D p2 = { (int)triangle.newPos[1].x, (int)triangle.newPos[1].y };
+		Point2D p3 = { (int)triangle.newPos[2].x, (int)triangle.newPos[2].y };
+		DrawTriangle(p1, p2, p3, color);
+	}
 
 	//填充平顶三角形
 	void FillTopTriangle(const Point2D &p1, const Point2D &p2, const Point2D &p3, UINT color)
@@ -238,7 +269,7 @@ public:
 		int y = left.y;
 		while (y >= top.y)
 		{
-			DrawLine((int)(xleft + 0.5), y, (int)(xRight+0.5), y, color);
+			DrawLine((int)(xleft + 0.5), y, (int)(xRight + 0.5), y, color);
 			y--;
 			xleft -= leftDxDivDy;
 			xRight -= rightDxDivDy;
@@ -286,16 +317,126 @@ public:
 		}
 	}
 
-	//渲染主函数
-	void Render()
+	//将物体加入渲染列表
+	void AddObjectList(Objecet *objecet)
 	{
-		Clear();
-		Point2D p1 = { -30, 250 };
-		Point2D p2 = { 110, 350 };
-		Point2D p3 = { 200, -220 };
-		SetClip(60, 70, 500, 500);
-		DrawTriangle(p1, p2, p3, foreground);
+		if (objecet == nullptr)
+		{
+			return;
+		}
+		objecetList[objectListCount++] = objecet;
 	}
+
+	//渲染物体列表
+	void RenderObject()
+	{
+		for (int i = 0; i < objectListCount; i++)
+		{
+			for (int j = 0; j < objecetList[i]->triangleCount; j++)
+			{
+				DrawTriangle(objecetList[i]->triangleList[j], foreground);
+			}
+		}
+	}
+
+	//清空渲染列表
+	void ClearObjectList()
+	{
+		objectListCount = 0;
+	}
+
+	//相机变换
+	void WorldToCamera()
+	{
+		for (int i = 0; i < objectListCount; i++)
+		{
+			for (int j = 0; j < objecetList[i]->triangleCount; j++)
+			{
+				for (int k = 0; k < 3; k++)
+				{
+					objecetList[i]->triangleList[j].newPos[k] = camera->WolrdToCamera(objecetList[i]->triangleList[j].newPos[k]);
+				}
+			}
+		}
+	}
+
+	//世界变换
+	void LocalToWorld()
+	{
+		for (int i = 0; i < objectListCount; i++)
+		{
+			Matrix4X4 translation = { 1,0,0,0,
+				0,1,0,0,
+				0,0,1,0,
+				objecetList[i]->position.x, objecetList[i]->position.y, objecetList[i]->position.z, 1 };
+
+			for (int j = 0; j < objecetList[i]->triangleCount; j++)
+			{
+				for (int k = 0; k < 3; k++)
+				{
+					MatrixApply(objecetList[i]->triangleList[j].newPos[k], 
+						objecetList[i]->triangleList[j].oldPos[k], translation);
+				}
+			}
+		}
+	}
+
+	//投影变换
+	void Projection()
+	{
+		for (int i = 0; i < objectListCount; i++)
+		{
+			for (int j = 0; j < objecetList[i]->triangleCount; j++)
+			{
+				for (int k = 0; k < 3; k++)
+				{
+					objecetList[i]->triangleList[j].newPos[k].x = objecetList[i]->triangleList[j].newPos[k].x / objecetList[i]->triangleList[j].newPos[k].z * camera->GetViewDistance();
+					objecetList[i]->triangleList[j].newPos[k].y = objecetList[i]->triangleList[j].newPos[k].y / objecetList[i]->triangleList[j].newPos[k].z * camera->GetViewDistance();
+				}
+			}
+		}
+	}
+
+private:
+	void Init(UVNCamera *camera, int width, int height, void *frameBuffer, int renderState, UINT foreground, UINT background)
+	{
+		this->camera = camera;
+		this->width = width;
+		this->height = height;
+		this->frameBuffer = (UINT*)frameBuffer;
+		this->renderState = renderState;
+		this->foreground = foreground;
+		this->background = background;
+		this->clipMinX = 0;
+		this->clipMinY = 0;
+		this->clipMaxX = width;
+		this->clipMaxY = height;
+		objectListCount = 0;
+	}
+	void Destroy()
+	{
+		if (frameBuffer != nullptr)
+		{
+			delete frameBuffer;
+			frameBuffer = nullptr;
+		}
+	}
+private:
+	int width;
+	int height;
+	UINT *frameBuffer;		//图像缓存
+	int renderState;
+	UINT background;		//背景颜色
+	UINT foreground;		//线框颜色
+	int clipMaxX;
+	int clipMaxY;
+	int clipMinX;
+	int clipMinY;
+
+	UVNCamera *camera;		//相机
+
+	int objectListCount;
+	Objecet *objecetList[64];			//渲染物体列表
 };
 
 
