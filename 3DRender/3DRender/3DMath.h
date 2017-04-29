@@ -5,6 +5,8 @@
 #define __3DMATH_H
 #include <cmath>
 
+const double PI = 3.1415926;
+
 typedef unsigned int UINT32;
 //4X4æÿ’Û
 struct Matrix4X4

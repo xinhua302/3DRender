@@ -1,3 +1,6 @@
+/*
+*几何体定义
+*/
 #ifndef __GEOMETRYDEFINE_H
 #define __GEOMETRYDEFINE_H
 #include "3DMath.h"

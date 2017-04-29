@@ -17,55 +17,11 @@ public:
 	void Render()
 	{
 		Clear();
-		/*Point2D p1 = { -30, 250 };
-		Point2D p2 = { 110, 350 };
-		Point2D p3 = { 200, -220 };
-		SetClip(60, 70, 500, 500);
-		DrawTriangle(p1, p2, p3, foreground);*/
-
-		//正方体
-		Point3D mesh[8] = {
-			{ 100, -100, 100, 1},
-			{-100, -100, 100, 1},
-			{-100,  100, 100, 1},
-			{ 100,  100, 100, 1},
-			{ 100, -100, -100, 1},
-			{-100, -100, -100, 1},
-			{-100,  100, -100, 1},
-			{ 100,  100, -100, 1},
-		};
-
-		Triangle t1(mesh[0], mesh[1], mesh[2]);
-		Triangle t2(mesh[2], mesh[3], mesh[1]);
-
-		Triangle t3(mesh[4], mesh[5], mesh[6]);
-		Triangle t4(mesh[6], mesh[7], mesh[4]);
-
-		Triangle t5(mesh[0], mesh[4], mesh[7]);
-		Triangle t6(mesh[7], mesh[3], mesh[0 ]);
-
-		Triangle t7(mesh[1], mesh[5], mesh[6]);
-		Triangle t8(mesh[6], mesh[2], mesh[1]);
-
-		Triangle t9(mesh[0], mesh[1], mesh[5]);
-		Triangle t10(mesh[5], mesh[4], mesh[0]);
-
-		Triangle t11(mesh[3], mesh[2], mesh[6]);
-		Triangle t12(mesh[6], mesh[7], mesh[3]);
-
-		Triangle list[12] = { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12 };
-
-		Objecet *object = new Objecet({ 400,400,200,1 }, 12, list);
-		AddObjectList(object);
 		LocalToWorld();
 		WorldToCamera();
-		Projection();
+		Projection();	
+		ViewTransform();
 		RenderObject();
-		delete object;
-		ClearObjectList();
-
-
-
 	}
 	void Clear()
 	{
@@ -374,7 +330,7 @@ public:
 			{
 				for (int k = 0; k < 3; k++)
 				{
-					MatrixApply(objecetList[i]->triangleList[j].newPos[k], 
+					MatrixApply(objecetList[i]->triangleList[j].newPos[k],
 						objecetList[i]->triangleList[j].oldPos[k], translation);
 				}
 			}
@@ -396,6 +352,26 @@ public:
 			}
 		}
 	}
+
+	//视图变换
+	void ViewTransform()
+	{
+		for (int i = 0; i < objectListCount; i++)
+		{
+			for (int j = 0; j < objecetList[i]->triangleCount; j++)
+			{
+				for (int k = 0; k < 3; k++)
+				{
+ 					float t = (objecetList[i]->triangleList[j].newPos[k].x + camera->GetViewWidth() / 2) / camera->GetViewWidth();
+					objecetList[i]->triangleList[j].newPos[k].x = Interp(0.0f, (float)width, t);
+					t = (objecetList[i]->triangleList[j].newPos[k].y + camera->GetViewHeight() / 2) / camera->GetViewHeight();
+					//windows编程中Y轴要反转
+					objecetList[i]->triangleList[j].newPos[k].y = (float)height - Interp(0.0f, (float)height, t);
+				}
+			}
+		}
+	}
+
 
 private:
 	void Init(UVNCamera *camera, int width, int height, void *frameBuffer, int renderState, UINT foreground, UINT background)

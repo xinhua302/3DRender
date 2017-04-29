@@ -1,3 +1,6 @@
+/*
+*摄像机
+*/
 #ifndef __CAMERA_H
 #define __CAMERA_H
 #include "3DMath.h"
@@ -23,12 +26,24 @@ public:
 		return fov;
 	}
 
+	float GetViewWidth() const
+	{
+		return width;
+	}
+
+	float GetViewHeight() const
+	{
+		return height;
+	}
+
 	UVNCamera(Point3D position, Vector3D u, Vector3D v, Vector3D n, 
-		float nearClip, float farClip, float fov, float viewDistance)
+		float nearClip, float farClip, float fov, float viewDistance, float aspectRatio)
 		:position(position), u(u), v(v), n(n),
-		nearClip(nearClip), farClip(farClip), fov(fov), viewDistance(viewDistance)
+		nearClip(nearClip), farClip(farClip), fov(fov), viewDistance(viewDistance), aspectRatio(aspectRatio)
 	{
 		CalculateMatCamera();
+		width = (float)(viewDistance * tan(fov *  PI / 360.0f ) * 2);
+		height = width / aspectRatio;
 	}
 	~UVNCamera()
 	{
@@ -63,5 +78,9 @@ private:
 	float nearClip;		//近裁剪面
 	float farClip;		//远裁剪面
 	float viewDistance;	//视距
+
+	float aspectRatio;	//宽高比
+	float width;
+	float height;
 };
 #endif
