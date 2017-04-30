@@ -18,6 +18,16 @@ struct Matrix4X4
 struct Vector3D
 {
 	float x, y, z, w;
+
+	Vector3D operator-(const Vector3D & v)
+	{
+		return Vector3D{this->x - v.x, this->y - v.y, this->z - v.z, 0 };
+	}
+
+	Vector3D operator-(const Vector3D & v) const
+	{
+		return Vector3D{ this->x - v.x, this->y - v.y, this->z - v.z, 0 };
+	}
 };
 
 //2DоРа©

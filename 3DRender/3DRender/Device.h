@@ -19,6 +19,7 @@ public:
 		Clear();
 		LocalToWorld();
 		WorldToCamera();
+		RemoveBackfaceTriangle();
 		Projection();	
 		ViewTransform();
 		RenderObject();
@@ -290,6 +291,9 @@ public:
 		{
 			for (int j = 0; j < objecetList[i]->triangleCount; j++)
 			{
+				if (objecetList[i]->triangleList[j].State == TRIANGLE_BACKFACE)
+					continue;
+
 				DrawTriangle(objecetList[i]->triangleList[j], foreground);
 			}
 		}
@@ -316,6 +320,30 @@ public:
 		}
 	}
 
+	//背面剔除
+	void RemoveBackfaceTriangle()
+	{
+		for (int i = 0; i < objectListCount; i++)
+		{
+			for (int j = 0; j < objecetList[i]->triangleCount; j++)
+			{
+				Vector3D v1 = objecetList[i]->triangleList[j].newPos[1] - objecetList[i]->triangleList[j].newPos[0];
+				Vector3D v2 =  objecetList[i]->triangleList[j].newPos[2] - objecetList[i]->triangleList[j].newPos[1];
+				//法线
+				Vector3D normal;
+				VectorCross(normal, v1, v2);
+
+				Vector3D direction = objecetList[i]->triangleList[j].newPos[0] - camera->GetPosition();
+
+				float dot = VectorDot(direction, normal);
+
+				if (dot <= 0.0f)
+				{
+					objecetList[i]->triangleList[j].State = TRIANGLE_BACKFACE;
+				}
+			}
+		}
+	}
 	//世界变换
 	void LocalToWorld()
 	{
@@ -344,6 +372,9 @@ public:
 		{
 			for (int j = 0; j < objecetList[i]->triangleCount; j++)
 			{
+				if (objecetList[i]->triangleList[j].State == TRIANGLE_BACKFACE)
+					continue;
+
 				for (int k = 0; k < 3; k++)
 				{
 					objecetList[i]->triangleList[j].newPos[k].x = objecetList[i]->triangleList[j].newPos[k].x / objecetList[i]->triangleList[j].newPos[k].z * camera->GetViewDistance();
@@ -360,6 +391,9 @@ public:
 		{
 			for (int j = 0; j < objecetList[i]->triangleCount; j++)
 			{
+				if (objecetList[i]->triangleList[j].State == TRIANGLE_BACKFACE)
+					continue;
+
 				for (int k = 0; k < 3; k++)
 				{
  					float t = (objecetList[i]->triangleList[j].newPos[k].x + camera->GetViewWidth() / 2) / camera->GetViewWidth();

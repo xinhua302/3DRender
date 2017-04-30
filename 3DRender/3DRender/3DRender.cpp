@@ -220,17 +220,17 @@ Point3D mesh[8] = {
 Triangle t1(mesh[0], mesh[1], mesh[2]);
 Triangle t2(mesh[2], mesh[3], mesh[1]);
 
-Triangle t3(mesh[4], mesh[5], mesh[6]);
-Triangle t4(mesh[6], mesh[7], mesh[4]);
+Triangle t3(mesh[6], mesh[5], mesh[4]);
+Triangle t4(mesh[4], mesh[7], mesh[6]);
 
-Triangle t5(mesh[0], mesh[4], mesh[7]);
-Triangle t6(mesh[7], mesh[3], mesh[0]);
+Triangle t5(mesh[7], mesh[4], mesh[0]);
+Triangle t6(mesh[0], mesh[3], mesh[7]);
 
 Triangle t7(mesh[1], mesh[5], mesh[6]);
 Triangle t8(mesh[6], mesh[2], mesh[1]);
 
-Triangle t9(mesh[0], mesh[1], mesh[5]);
-Triangle t10(mesh[5], mesh[4], mesh[0]);
+Triangle t9(mesh[5], mesh[1], mesh[0]);
+Triangle t10(mesh[0], mesh[4], mesh[5]);
 
 Triangle t11(mesh[3], mesh[2], mesh[6]);
 Triangle t12(mesh[6], mesh[7], mesh[3]);
@@ -246,14 +246,15 @@ void RenderMain()
 
 void RenderInit()
 {
-	Point3D camerPos = { 0, 0, 0, 1 };
-	Vector3D u = { 1, 0, 0, 0 };
-	Vector3D v = { 0, 1, 0, 0 };
-	Vector3D n = { 0, 0, 1, 0 };
-	camera = new UVNCamera(camerPos, u, v, n, 2, 4, 90, 1, SCREEN_WIDTH * 1.0f / SCREEN_HEIGHT);
+	Point3D objectPosition = { -2.0f, 1.7f, 4, 1 };
+
+	Point3D camerPos = { 0.0, -1.0f, 0, 1 };
+	Vector3D v = { 0, 1, -0.5, 0 };
+	camera = new UVNCamera(camerPos, objectPosition, v, 2, 4, 90, 1, SCREEN_WIDTH * 1.0f / SCREEN_HEIGHT);
+
 	device = new Device(camera, SCREEN_WIDTH, SCREEN_HEIGHT, Buffer, RENDER_STATE_WIREFRAME, 0xFFFFFFFF, 0xFFFF0000);
 
-	object = new Objecet({ 1.5f, 1.5f, 5, 1 }, 12, list);
+	object = new Objecet(objectPosition, 12, list);
 	device->AddObjectList(object);
 }
 

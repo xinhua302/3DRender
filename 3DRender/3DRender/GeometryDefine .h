@@ -5,11 +5,14 @@
 #define __GEOMETRYDEFINE_H
 #include "3DMath.h"
 
+const int TRIANGLE_BACKFACE = 1;
+const int TRIANGLE_CLIPPED = 2;
 //Èý½ÇÐÎ
 struct Triangle
 {
 	Point3D oldPos[3];
 	Point3D newPos[3];
+	int State;
 
 	Triangle(const Point3D & p0, const Point3D & p1, const Point3D & p2)
 	{
