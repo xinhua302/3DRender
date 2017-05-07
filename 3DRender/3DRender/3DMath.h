@@ -5,6 +5,8 @@
 #define __3DMATH_H
 #include <cmath>
 
+typedef unsigned char UCHAR;
+
 const double PI = 3.1415926;
 
 typedef unsigned int UINT32;
@@ -307,5 +309,57 @@ void TransformUpdate(Transform &ts)
 	Matrix4X4 m;
 	MatrixMul(m, ts.world, ts.view);
 	MatrixMul(ts.transform, m, ts.projection);
+}
+
+struct Linear2D
+{
+	float x0, y0, x1, y1;
+
+	Linear2D(float x0, float y0, float x1, float y1) 
+	{
+		this->x0 = x0;
+		this->y0 = y0;
+		this->x1 = x1;
+		this->y1 = y1;
+	}
+
+	//f01（x，y）=（y0-y1）*x+（x1-x0）*y+x0*y1-x1*y0
+	float InputXGetY(float x)
+	{
+		return -((y0 - y1)*x + x0*y1 - x1*y0) / (x1 - x0);
+	}
+
+	float InputYGetX(float y)
+	{
+		return -((x1 - x0)*y + x0*y1 - x1*y0) / (y0 - y1);
+	}
+};
+
+//输入三角形的三个点，输出插值
+float GetInterpValue(float x0, float y0, float value0, 
+	float x1, float y1, float value1, 
+	float x2, float y2, float value2, 
+	float x, float y)
+{
+	Vector3D p1 = { x1 - x, y1 - y, 0 };
+	Vector3D p2 = { x2 - x, y2 - y, 0 };
+	Vector3D p0 = { x0 - x, y0 - y };
+
+	Vector3D p12;
+	VectorCross(p12, p1, p2);
+	float Sp12 = CalculateVector3DLength(p12);
+
+	Vector3D p02;
+	VectorCross(p02, p0, p2);
+	float Sp02 = CalculateVector3DLength(p02);
+
+	Vector3D p01;
+	VectorCross(p01, p0, p1);
+	float Sp01 = CalculateVector3DLength(p01);
+
+	float total = Sp12 + Sp02 + Sp01;
+
+	float value = value0 * Sp12 / total + value1 * Sp02 / total + value2 * Sp01 / total;
+	return value;
 }
 #endif

@@ -7,18 +7,85 @@
 
 const int TRIANGLE_BACKFACE = 1;
 const int TRIANGLE_CLIPPED = 2;
+
+//¶¥µã
+struct Vertex3D
+{
+	Point3D oldPos;
+	Point3D newPos;
+	Point2D uv;
+	UINT color;
+
+	UINT GetRGB()
+	{
+		UINT rgb =  color & ((1 << 24) - 1);
+		return rgb;
+	}
+
+	float GetR()
+	{
+		UINT c = color & 0x00FF0000;
+		UINT value = c >> 16;
+		return (float)value;
+	}
+
+	float GetG()
+	{
+		return (color & 0x0000FF00) >> 8;
+	}
+
+	float GetB()
+	{
+		return color & 0x000000FF;
+	}
+};
+
 //Èý½ÇÐÎ
 struct Triangle
 {
-	Point3D oldPos[3];
-	Point3D newPos[3];
-	int State;
+	Vertex3D vertex[3];
+	int state;
 
-	Triangle(const Point3D & p0, const Point3D & p1, const Point3D & p2)
+	Triangle(Point3D p0, Point3D p1, Point3D p2, UINT color0, UINT color1, UINT color2, bool isNew = false)
 	{
-		oldPos[0] = p0;
-		oldPos[1] = p1;
-		oldPos[2] = p2;
+		if (isNew)
+		{
+			vertex[0].newPos = p0;
+			vertex[1].newPos = p1;
+			vertex[2].newPos = p2;
+		}
+		else
+		{
+			vertex[0].oldPos = p0;
+			vertex[1].oldPos = p1;
+			vertex[2].oldPos = p2;
+		}
+		
+		vertex[0].color = color0;
+		vertex[1].color = color1;
+		vertex[2].color = color2;
+	}
+
+	void SortTopToBottom()
+	{
+		const int count = 3;
+		for (int i = 0; i < count - 1; i++)
+		{
+			int index = i;
+			for (int j = index; j < count; j++)
+			{
+				if (vertex[j].newPos.y > vertex[index].newPos.y)
+				{
+					continue;
+				}
+				index = j;
+			}
+
+			if (index != i)
+			{
+				Swap(vertex[i], vertex[index]);
+			}
+		}
 	}
 };
 

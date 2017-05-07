@@ -216,24 +216,26 @@ Point3D mesh[8] = {
 	{ -1,  1, -1, 1 },
 	{ 1,  1, -1, 1 },
 };
+
+UINT color[8] = { 0x00FF0000 , 0x0000FF00 , 0x000000FF , 0x00FF0000 , 0x0000FF00 , 0x000000FF , 0x00FF0000 , 0x0000FF00 };
 //12个三角形
-Triangle t1(mesh[0], mesh[1], mesh[2]);
-Triangle t2(mesh[2], mesh[3], mesh[1]);
+Triangle t1(mesh[0], mesh[1], mesh[2], color[0], color[1], color[2]);
+Triangle t2(mesh[2], mesh[3], mesh[1], color[2], color[3], color[1]);
 
-Triangle t3(mesh[6], mesh[5], mesh[4]);
-Triangle t4(mesh[4], mesh[7], mesh[6]);
+Triangle t3(mesh[6], mesh[5], mesh[4], color[6], color[5], color[4]);
+Triangle t4(mesh[4], mesh[7], mesh[6], color[4], color[7], color[6]);
 
-Triangle t5(mesh[7], mesh[4], mesh[0]);
-Triangle t6(mesh[0], mesh[3], mesh[7]);
+Triangle t5(mesh[7], mesh[4], mesh[0], color[7], color[4], color[0]);
+Triangle t6(mesh[0], mesh[3], mesh[7], color[0], color[3], color[7]);
 
-Triangle t7(mesh[1], mesh[5], mesh[6]);
-Triangle t8(mesh[6], mesh[2], mesh[1]);
+Triangle t7(mesh[1], mesh[5], mesh[6], color[1], color[5], color[6]);
+Triangle t8(mesh[6], mesh[2], mesh[1], color[6], color[2], color[1]);
 
-Triangle t9(mesh[5], mesh[1], mesh[0]);
-Triangle t10(mesh[0], mesh[4], mesh[5]);
+Triangle t9(mesh[5], mesh[1], mesh[0], color[5], color[1], color[0]);
+Triangle t10(mesh[0], mesh[4], mesh[5], color[0], color[4], color[5]);
 
-Triangle t11(mesh[3], mesh[2], mesh[6]);
-Triangle t12(mesh[6], mesh[7], mesh[3]);
+Triangle t11(mesh[3], mesh[2], mesh[6], color[3], color[2], color[6]);
+Triangle t12(mesh[6], mesh[7], mesh[3], color[6], color[7], color[3]);
 //三角形列表
 Triangle list[12] = { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12 };
 
@@ -248,7 +250,7 @@ void RenderInit()
 {
 	Point3D objectPosition = { -2.0f, 1.7f, 4, 1 };
 
-	Point3D camerPos = { 0.0, -1.0f, 0, 1 };
+	Point3D camerPos = { 0.0, 0.0f, 0, 1 };
 	Vector3D v = { 0, 1, -0.5, 0 };
 	camera = new UVNCamera(camerPos, objectPosition, v, 2, 4, 90, 1, SCREEN_WIDTH * 1.0f / SCREEN_HEIGHT);
 

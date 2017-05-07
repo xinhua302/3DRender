@@ -1,3 +1,9 @@
 ﻿  3DRender.cpp
+f:\code\3drender\3drender\3drender\geometrydefine .h(34): warning C4244: “return”: 从“UINT”转换到“float”，可能丢失数据
+f:\code\3drender\3drender\3drender\geometrydefine .h(39): warning C4244: “return”: 从“UINT”转换到“float”，可能丢失数据
+f:\code\3drender\3drender\3drender\device.h(245): warning C4244: “参数”: 从“UINT”转换到“float”，可能丢失数据
+f:\code\3drender\3drender\3drender\device.h(245): warning C4244: “初始化”: 从“float”转换到“UINT”，可能丢失数据
+f:\code\3drender\3drender\3drender\device.h(322): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+f:\code\3drender\3drender\3drender\device.h(444): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
   3DRender.vcxproj -> F:\code\3DRender\3DRender\Debug\3DRender.exe
   3DRender.vcxproj -> F:\code\3DRender\3DRender\Debug\3DRender.pdb (Full PDB)

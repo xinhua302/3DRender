@@ -20,9 +20,11 @@ public:
 		LocalToWorld();
 		WorldToCamera();
 		RemoveBackfaceTriangle();
-		Projection();	
+		Projection();
 		ViewTransform();
 		RenderObject();
+		/*Triangle t({200, 400, 200}, { 400, 400, 200 }, { 300, 100, 200 }, 0x00FF0000, 0x0000FF00, 0x000000FF, true);
+		DrawTriangle(t);*/
 	}
 	void Clear()
 	{
@@ -88,7 +90,7 @@ public:
 				while (x <= x2)
 				{
 					DrawPoint(x, y, color);
-					y = (int)(k * ++x + b + 0.5);
+					y = (int)(k * ++x + b);
 				}
 			}
 			else
@@ -96,7 +98,7 @@ public:
 				while (x > x2)
 				{
 					DrawPoint(x, y, color);
-					y = (int)(k * --x + b + 0.5);
+					y = (int)(k * --x + b);
 				}
 			}
 		}
@@ -107,7 +109,7 @@ public:
 				while (y <= y2)
 				{
 					DrawPoint(x, y, color);
-					x = (int)((++y - b) / k + 0.5);
+					x = (int)((++y - b) / k);
 				}
 			}
 			else
@@ -115,7 +117,7 @@ public:
 				while (y > y2)
 				{
 					DrawPoint(x, y, color);
-					x = (int)((--y - b) / k + 0.5);
+					x = (int)((--y - b) / k);
 				}
 			}
 		}
@@ -178,7 +180,7 @@ public:
 				//(y - b) / k
 				float k = (pList[0].y - pList[2].y) * 1.0f / (pList[0].x - pList[2].x);
 				float b = pList[2].y - k*pList[2].x;
-				int CenterPointX = (int)((pList[1].y - b) / k + 0.5);
+				int CenterPointX = (int)((pList[1].y - b) / k);
 				Point2D centerPoint = { CenterPointX, pList[1].y };
 				FillTopTriangle(pList[0], centerPoint, pList[1], color);
 				FillBottomTriangle(centerPoint, pList[1], pList[2], color);
@@ -187,10 +189,65 @@ public:
 	}
 	void DrawTriangle(const Triangle &triangle, UINT color)
 	{
-		Point2D p1 = { (int)triangle.newPos[0].x, (int)triangle.newPos[0].y };
-		Point2D p2 = { (int)triangle.newPos[1].x, (int)triangle.newPos[1].y };
-		Point2D p3 = { (int)triangle.newPos[2].x, (int)triangle.newPos[2].y };
+		Point2D p1 = { (int)triangle.vertex[0].newPos.x, (int)triangle.vertex[0].newPos.y };
+		Point2D p2 = { (int)triangle.vertex[1].newPos.x, (int)triangle.vertex[1].newPos.y };
+		Point2D p3 = { (int)triangle.vertex[2].newPos.x, (int)triangle.vertex[2].newPos.y };
 		DrawTriangle(p1, p2, p3, color);
+	}
+	void DrawTriangle(const Triangle &triangle)
+	{
+		if (triangle.vertex[0].newPos.y == triangle.vertex[1].newPos.y)
+		{
+			if (triangle.vertex[2].newPos.y > triangle.vertex[1].newPos.y)
+			{
+				FillBottomTriangle(triangle);
+			}
+			else if (triangle.vertex[2].newPos.y < triangle.vertex[1].newPos.y)
+			{
+				FillTopTriangle(triangle);
+			}
+		}
+		else if (triangle.vertex[0].newPos.y == triangle.vertex[2].newPos.y)
+		{
+			if (triangle.vertex[1].newPos.y > triangle.vertex[0].newPos.y)
+			{
+				FillBottomTriangle(triangle);
+			}
+			else if (triangle.vertex[1].newPos.y < triangle.vertex[0].newPos.y)
+			{
+				FillTopTriangle(triangle);
+			}
+		}
+		else if (triangle.vertex[1].newPos.y == triangle.vertex[2].newPos.y)
+		{
+			if (triangle.vertex[2].newPos.y > triangle.vertex[1].newPos.y)
+			{
+				FillBottomTriangle(triangle);
+			}
+			else if (triangle.vertex[1].newPos.y < triangle.vertex[0].newPos.y)
+			{
+				FillTopTriangle(triangle);
+			}
+		}
+		//不是平底也不是平顶,需要拆分
+		else
+		{
+			//从上到下排列顶点
+			Triangle t = triangle;
+			t.SortTopToBottom();
+			//(y - b) / k
+			Linear2D linear2D(t.vertex[0].newPos.x, t.vertex[0].newPos.y, t.vertex[2].newPos.x, t.vertex[2].newPos.y);
+			float centerX = linear2D.InputYGetX(t.vertex[1].newPos.y);
+			Point3D centerPos = { centerX,  t.vertex[1].newPos.y , 0 };
+			UINT centerColor = GetInterpValue(t.vertex[0].newPos.x, t.vertex[0].newPos.y, t.vertex[0].color,
+				t.vertex[1].newPos.x, t.vertex[1].newPos.y, t.vertex[1].color, 
+				t.vertex[2].newPos.x, t.vertex[2].newPos.y, t.vertex[2].color,
+				centerX, t.vertex[1].newPos.y);
+			Triangle t1(t.vertex[0].newPos, centerPos, t.vertex[1].newPos, t.vertex[0].color, centerColor, t.vertex[1].color, true);
+			Triangle t2(centerPos, t.vertex[1].newPos, t.vertex[2].newPos, centerColor, t.vertex[1].color, t.vertex[2].color, true);
+			FillTopTriangle(t1);
+			FillBottomTriangle(t2);
+		}
 	}
 
 	//填充平顶三角形
@@ -226,10 +283,91 @@ public:
 		int y = left.y;
 		while (y >= top.y)
 		{
-			DrawLine((int)(xleft + 0.5), y, (int)(xRight + 0.5), y, color);
+			DrawLine((int)(xleft), y, (int)(xRight), y, color);
 			y--;
 			xleft -= leftDxDivDy;
 			xRight -= rightDxDivDy;
+		}
+	}
+
+	void FillTopTriangle(const Triangle &t)
+	{
+		Vertex3D top, left, right;
+		if (t.vertex[0].newPos.y == t.vertex[1].newPos.y)
+		{
+			top = t.vertex[2];
+			left = t.vertex[0];
+			right = t.vertex[1];
+		}
+		else if (t.vertex[1].newPos.y == t.vertex[2].newPos.y)
+		{
+			top = t.vertex[0];
+			left = t.vertex[1];
+			right = t.vertex[2];
+		}
+		else
+		{
+			top = t.vertex[1];
+			left = t.vertex[0];
+			right = t.vertex[2];;
+		}
+		if (left.newPos.x > right.newPos.x)
+		{
+			Swap(left, right);
+		}
+		float leftDxDivDy = (top.newPos.x - left.newPos.x) / ((float)top.newPos.y - (float)left.newPos.y);
+		float rightDxDivDy = ((float)right.newPos.x - (float)top.newPos.x) / ((float)right.newPos.y - (float)top.newPos.y);
+		float xleft = (float)left.newPos.x;
+		float xRight = (float)right.newPos.x;
+		int y = left.newPos.y;
+
+		//颜色
+		//R
+		float leftDxDivDyColorR = (top.GetR() - left.GetR()) / (top.newPos.y - left.newPos.y);
+		float rightDxDivDyColorR = (right.GetR() - top.GetR()) / (right.newPos.y - top.newPos.y);
+		float xLeftColorR = left.GetR();
+		float xRightColorR = right.GetR();
+		//G
+		float leftDxDivDyColorG = (top.GetG() - left.GetG()) / (top.newPos.y - left.newPos.y);
+		float rightDxDivDyColorG = (right.GetG() - top.GetG()) / (right.newPos.y - top.newPos.y);
+		float xLeftColorG = left.GetG();
+		float xRightColorG = right.GetG();
+		//B
+		float leftDxDivDyColorB = (top.GetB() - left.GetB()) / (top.newPos.y - left.newPos.y);
+		float rightDxDivDyColorB = (right.GetB() - top.GetB()) / (right.newPos.y - top.newPos.y);
+		float xLeftColorB = left.GetB();
+		float xRightColorB = right.GetB();
+
+		while (y >= top.newPos.y)
+		{
+			float dxColorR = (xRightColorR - xLeftColorR) / (xRight - xleft);
+			float ColorStarR = xLeftColorR;
+
+			float dxColorG = (xRightColorG - xLeftColorG) / (xRight - xleft);
+			float ColorStarG = xLeftColorG;
+
+			float dxColorB = (xRightColorB - xLeftColorB) / (xRight - xleft);
+			float ColorStarB = xLeftColorB;
+			for (int i = (int)(xleft); i <= (int)(xRight); i++)
+			{
+				UINT color = (((UINT)ColorStarR) << 16) + (((UINT)ColorStarG) << 8) + (((UINT)ColorStarB));
+				DrawPoint(i, y, color);
+				ColorStarR += dxColorR;
+				ColorStarG += dxColorG;
+				ColorStarB += dxColorB;
+			}
+			y--;
+			xleft -= leftDxDivDy;
+			xRight -= rightDxDivDy;
+
+			xLeftColorR -= leftDxDivDyColorR;
+			xRightColorR -= rightDxDivDyColorR;
+
+			xLeftColorG -= leftDxDivDyColorG;
+			xRightColorG -= rightDxDivDyColorG;
+
+			xLeftColorB -= leftDxDivDyColorB;
+			xRightColorB -= rightDxDivDyColorB;
 		}
 	}
 
@@ -267,10 +405,91 @@ public:
 		int y = left.y;
 		while (y <= bottom.y)
 		{
-			DrawLine((int)(xleft + 0.5), y, (int)(xRight + 0.5), y, color);
+			DrawLine((int)(xleft), y, (int)(xRight), y, color);
 			y++;
 			xleft += leftDxDivDy;
 			xRight += rightDxDivDy;
+		}
+	}
+
+	void FillBottomTriangle(const Triangle &t)
+	{
+		Vertex3D bottom, left, right;
+		if (t.vertex[0].newPos.y == t.vertex[1].newPos.y)
+		{
+			bottom = t.vertex[2];
+			left = t.vertex[0];
+			right = t.vertex[1];
+		}
+		else if (t.vertex[1].newPos.y == t.vertex[2].newPos.y)
+		{
+			bottom = t.vertex[0];
+			left = t.vertex[1];
+			right = t.vertex[2];
+		}
+		else
+		{
+			bottom = t.vertex[1];
+			left = t.vertex[0];
+			right = t.vertex[2];;
+		}
+		if (left.newPos.x > right.newPos.x)
+		{
+			Swap(left, right);
+		}
+		float leftDxDivDy = (bottom.newPos.x - left.newPos.x) / ((float)bottom.newPos.y - (float)left.newPos.y);
+		float rightDxDivDy = ((float)right.newPos.x - (float)bottom.newPos.x) / ((float)right.newPos.y - (float)bottom.newPos.y);
+		float xleft = (float)left.newPos.x;
+		float xRight = (float)right.newPos.x;
+		int y = left.newPos.y;
+
+		//颜色
+		//R
+		float leftDxDivDyColorR= (bottom.GetR() - left.GetR()) / (bottom.newPos.y - left.newPos.y);
+		float rightDxDivDyColorR = (right.GetR() - bottom.GetR()) / (right.newPos.y - bottom.newPos.y);
+		float xLeftColorR = left.GetR();
+		float xRightColorR = right.GetR();
+		//G
+		float leftDxDivDyColorG = (bottom.GetG() - left.GetG()) / (bottom.newPos.y - left.newPos.y);
+		float rightDxDivDyColorG = (right.GetG() - bottom.GetG()) / (right.newPos.y - bottom.newPos.y);
+		float xLeftColorG = left.GetG();
+		float xRightColorG = right.GetG();
+		//B
+		float leftDxDivDyColorB = (bottom.GetB() - left.GetB()) / (bottom.newPos.y - left.newPos.y);
+		float rightDxDivDyColorB = (right.GetB() - bottom.GetB()) / (right.newPos.y - bottom.newPos.y);
+		float xLeftColorB = left.GetB();
+		float xRightColorB = right.GetB();
+
+		while (y <= bottom.newPos.y)
+		{
+			float dxColorR = (xRightColorR - xLeftColorR) / (xRight - xleft);
+			float ColorStarR = xLeftColorR;
+
+			float dxColorG = (xRightColorG - xLeftColorG) / (xRight - xleft);
+			float ColorStarG = xLeftColorG;
+
+			float dxColorB = (xRightColorB - xLeftColorB) / (xRight - xleft);
+			float ColorStarB = xLeftColorB;
+			for (int i = (int)(xleft); i <= (int)(xRight); i++)
+			{
+				UINT color = (((UINT)ColorStarR) << 16) + (((UINT)ColorStarG) << 8) + (((UINT)ColorStarB));
+ 				DrawPoint(i, y, color);
+				ColorStarR+= dxColorR;
+				ColorStarG += dxColorG;
+				ColorStarB += dxColorB;
+			}
+			y++;
+			xleft += leftDxDivDy;
+			xRight += rightDxDivDy;
+
+			xLeftColorR += leftDxDivDyColorR;
+			xRightColorR += rightDxDivDyColorR;
+
+			xLeftColorG += leftDxDivDyColorG;
+			xRightColorG += rightDxDivDyColorG;
+
+			xLeftColorB += leftDxDivDyColorB;
+			xRightColorB += rightDxDivDyColorB;
 		}
 	}
 
@@ -291,10 +510,11 @@ public:
 		{
 			for (int j = 0; j < objecetList[i]->triangleCount; j++)
 			{
-				if (objecetList[i]->triangleList[j].State == TRIANGLE_BACKFACE)
+				if (objecetList[i]->triangleList[j].state == TRIANGLE_BACKFACE)
 					continue;
 
-				DrawTriangle(objecetList[i]->triangleList[j], foreground);
+				DrawTriangle(objecetList[i]->triangleList[j]);
+				//DrawTriangle(objecetList[i]->triangleList[j], 0xFFFF0000);
 			}
 		}
 	}
@@ -314,7 +534,7 @@ public:
 			{
 				for (int k = 0; k < 3; k++)
 				{
-					objecetList[i]->triangleList[j].newPos[k] = camera->WolrdToCamera(objecetList[i]->triangleList[j].newPos[k]);
+					objecetList[i]->triangleList[j].vertex[k].newPos = camera->WolrdToCamera(objecetList[i]->triangleList[j].vertex[k].newPos);
 				}
 			}
 		}
@@ -327,19 +547,19 @@ public:
 		{
 			for (int j = 0; j < objecetList[i]->triangleCount; j++)
 			{
-				Vector3D v1 = objecetList[i]->triangleList[j].newPos[1] - objecetList[i]->triangleList[j].newPos[0];
-				Vector3D v2 =  objecetList[i]->triangleList[j].newPos[2] - objecetList[i]->triangleList[j].newPos[1];
+				Vector3D v1 = objecetList[i]->triangleList[j].vertex[1].newPos - objecetList[i]->triangleList[j].vertex[0].newPos;
+				Vector3D v2 =  objecetList[i]->triangleList[j].vertex[2].newPos - objecetList[i]->triangleList[j].vertex[1].newPos;
 				//法线
 				Vector3D normal;
 				VectorCross(normal, v1, v2);
 
-				Vector3D direction = objecetList[i]->triangleList[j].newPos[0] - camera->GetPosition();
+				Vector3D direction = objecetList[i]->triangleList[j].vertex[0].newPos - camera->GetPosition();
 
 				float dot = VectorDot(direction, normal);
 
 				if (dot <= 0.0f)
 				{
-					objecetList[i]->triangleList[j].State = TRIANGLE_BACKFACE;
+					objecetList[i]->triangleList[j].state = TRIANGLE_BACKFACE;
 				}
 			}
 		}
@@ -358,8 +578,8 @@ public:
 			{
 				for (int k = 0; k < 3; k++)
 				{
-					MatrixApply(objecetList[i]->triangleList[j].newPos[k],
-						objecetList[i]->triangleList[j].oldPos[k], translation);
+					MatrixApply(objecetList[i]->triangleList[j].vertex[k].newPos,
+						objecetList[i]->triangleList[j].vertex[k].oldPos, translation);
 				}
 			}
 		}
@@ -372,13 +592,13 @@ public:
 		{
 			for (int j = 0; j < objecetList[i]->triangleCount; j++)
 			{
-				if (objecetList[i]->triangleList[j].State == TRIANGLE_BACKFACE)
+				if (objecetList[i]->triangleList[j].state == TRIANGLE_BACKFACE)
 					continue;
 
 				for (int k = 0; k < 3; k++)
 				{
-					objecetList[i]->triangleList[j].newPos[k].x = objecetList[i]->triangleList[j].newPos[k].x / objecetList[i]->triangleList[j].newPos[k].z * camera->GetViewDistance();
-					objecetList[i]->triangleList[j].newPos[k].y = objecetList[i]->triangleList[j].newPos[k].y / objecetList[i]->triangleList[j].newPos[k].z * camera->GetViewDistance();
+					objecetList[i]->triangleList[j].vertex[k].newPos.x = objecetList[i]->triangleList[j].vertex[k].newPos.x / objecetList[i]->triangleList[j].vertex[k].newPos.z * camera->GetViewDistance();
+					objecetList[i]->triangleList[j].vertex[k].newPos.y = objecetList[i]->triangleList[j].vertex[k].newPos.y / objecetList[i]->triangleList[j].vertex[k].newPos.z * camera->GetViewDistance();
 				}
 			}
 		}
@@ -391,16 +611,16 @@ public:
 		{
 			for (int j = 0; j < objecetList[i]->triangleCount; j++)
 			{
-				if (objecetList[i]->triangleList[j].State == TRIANGLE_BACKFACE)
+				if (objecetList[i]->triangleList[j].state == TRIANGLE_BACKFACE)
 					continue;
 
 				for (int k = 0; k < 3; k++)
 				{
- 					float t = (objecetList[i]->triangleList[j].newPos[k].x + camera->GetViewWidth() / 2) / camera->GetViewWidth();
-					objecetList[i]->triangleList[j].newPos[k].x = Interp(0.0f, (float)width, t);
-					t = (objecetList[i]->triangleList[j].newPos[k].y + camera->GetViewHeight() / 2) / camera->GetViewHeight();
+ 					float t = (objecetList[i]->triangleList[j].vertex[k].newPos.x + camera->GetViewWidth() / 2) / camera->GetViewWidth();
+					objecetList[i]->triangleList[j].vertex[k].newPos.x = Interp(0.0f, (float)width, t);
+					t = (objecetList[i]->triangleList[j].vertex[k].newPos.y + camera->GetViewHeight() / 2) / camera->GetViewHeight();
 					//windows编程中Y轴要反转
-					objecetList[i]->triangleList[j].newPos[k].y = (float)height - Interp(0.0f, (float)height, t);
+					objecetList[i]->triangleList[j].vertex[k].newPos.y = (float)height - Interp(0.0f, (float)height, t);
 				}
 			}
 		}
