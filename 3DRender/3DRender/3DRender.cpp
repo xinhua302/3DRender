@@ -12,6 +12,8 @@ const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 const int BITS = 32;				//每个像素的位数  
 const int MAX_LOADSTRING = 100;
+const int TEXTURE_WIDTH = 256;
+const int TEXTURE_HEIGHT = 256;
 
 // 全局变量: 
 HINSTANCE hInst;								// 当前实例
@@ -21,8 +23,11 @@ HDC screen_hdc;
 HWND screen_hwnd;
 HDC hCompatibleDC; //兼容HDC  
 HBITMAP hCompatibleBitmap; //兼容BITMAP  
-HBITMAP hOldBitmap; //旧的BITMAP         
+HBITMAP hOldBitmap; //旧的BITMAP    
+HBITMAP hTextureBitmap;//纹理图
+UINT TextureBuffer[TEXTURE_WIDTH * TEXTURE_HEIGHT];
 BITMAPINFO binfo; //BITMAPINFO结构体  
+BITMAPINFO binfoTex;
 
 // 此代码模块中包含的函数的前向声明: 
 ATOM				MyRegisterClass(HINSTANCE hInstance);
@@ -150,6 +155,15 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    binfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
    binfo.bmiHeader.biWidth = SCREEN_WIDTH;
 
+   memset(&binfoTex, 0, sizeof(BITMAPINFO));
+   binfoTex.bmiHeader.biBitCount = BITS;      //每个像素多少位，也可直接写24(RGB)或者32(RGBA)  
+   binfoTex.bmiHeader.biCompression = BI_RGB;
+   binfoTex.bmiHeader.biHeight = -TEXTURE_HEIGHT;
+   binfoTex.bmiHeader.biPlanes = 1;
+   binfoTex.bmiHeader.biSizeImage = 0;
+   binfoTex.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+   binfoTex.bmiHeader.biWidth = TEXTURE_WIDTH;
+
    //获取屏幕HDC  
    screen_hwnd = hWnd;
    screen_hdc = GetDC(screen_hwnd);
@@ -204,7 +218,8 @@ Device *device;
 //相机
 UVNCamera *camera;
 //测试用的正方体
-Objecet *object;
+Objecet *object1;
+Objecet *object2;
 //8个坐标
 Point3D mesh[8] = {
 	{ 1, -1, 1, 1 },
@@ -219,51 +234,83 @@ Point3D mesh[8] = {
 
 UINT color[8] = { 0x00FF0000 , 0x0000FF00 , 0x000000FF , 0x00FF0000 , 0x0000FF00 , 0x000000FF , 0x00FF0000 , 0x0000FF00 };
 //12个三角形
-Triangle t1(mesh[0], mesh[1], mesh[2], color[0], color[1], color[2]);
-Triangle t2(mesh[2], mesh[3], mesh[1], color[2], color[3], color[1]);
+Triangle T1(mesh[0], mesh[1], mesh[2], color[0], color[1], color[2]);
+Triangle T2(mesh[2], mesh[3], mesh[1], color[2], color[3], color[1]);
 
-Triangle t3(mesh[6], mesh[5], mesh[4], color[6], color[5], color[4]);
-Triangle t4(mesh[4], mesh[7], mesh[6], color[4], color[7], color[6]);
+Triangle T3(mesh[6], mesh[5], mesh[4], color[6], color[5], color[4]);
+Triangle T4(mesh[4], mesh[7], mesh[6], color[4], color[7], color[6]);
 
-Triangle t5(mesh[7], mesh[4], mesh[0], color[7], color[4], color[0]);
-Triangle t6(mesh[0], mesh[3], mesh[7], color[0], color[3], color[7]);
+Triangle T5(mesh[7], mesh[4], mesh[0], color[7], color[4], color[0]);
+Triangle T6(mesh[0], mesh[3], mesh[7], color[0], color[3], color[7]);
 
-Triangle t7(mesh[1], mesh[5], mesh[6], color[1], color[5], color[6]);
-Triangle t8(mesh[6], mesh[2], mesh[1], color[6], color[2], color[1]);
+Triangle T7(mesh[1], mesh[5], mesh[6], color[1], color[5], color[6]);
+Triangle T8(mesh[6], mesh[2], mesh[1], color[6], color[2], color[1]);
 
-Triangle t9(mesh[5], mesh[1], mesh[0], color[5], color[1], color[0]);
-Triangle t10(mesh[0], mesh[4], mesh[5], color[0], color[4], color[5]);
+Triangle T9(mesh[5], mesh[1], mesh[0], color[5], color[1], color[0]);
+Triangle T10(mesh[0], mesh[4], mesh[5], color[0], color[4], color[5]);
 
-Triangle t11(mesh[3], mesh[2], mesh[6], color[3], color[2], color[6]);
-Triangle t12(mesh[6], mesh[7], mesh[3], color[6], color[7], color[3]);
+Triangle T11(mesh[3], mesh[2], mesh[6], color[3], color[2], color[6]);
+Triangle T12(mesh[6], mesh[7], mesh[3], color[6], color[7], color[3]);
+Triangle list2[12] = { T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12 };
+
+Point2D p0 = { 0.0f, 0.0f };
+Point2D p1 = { 1.0f, 0.0f };
+Point2D p2 = { 1.0f, 1.0f };
+Point2D p3 = { 0.0f, 1.0f };
+Triangle t1(mesh[0], mesh[1], mesh[2], p3, p0, p1, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+Triangle t2(mesh[2], mesh[3], mesh[1], p1, p2, p3, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+
+Triangle t3(mesh[6], mesh[5], mesh[4], p3, p0, p1, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+Triangle t4(mesh[4], mesh[7], mesh[6], p1, p2, p3, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+
+Triangle t5(mesh[7], mesh[4], mesh[0], p3, p0, p1, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+Triangle t6(mesh[0], mesh[3], mesh[7], p1, p2, p3, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+
+Triangle t7(mesh[1], mesh[5], mesh[6], p3, p0, p1, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+Triangle t8(mesh[6], mesh[2], mesh[1], p1, p2, p3, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+
+Triangle t9(mesh[5], mesh[1], mesh[0], p3, p0, p1, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+Triangle t10(mesh[0], mesh[4], mesh[5], p1, p2, p3, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+
+Triangle t11(mesh[3], mesh[2], mesh[6], p3, p0, p1, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+Triangle t12(mesh[6], mesh[7], mesh[3], p1, p2, p3, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
 //三角形列表
-Triangle list[12] = { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12 };
+Triangle list1[12] = { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12 };
 
 void RenderMain()
 {
 	device->Render();
+	device->RenderTexture(TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
 	Display();
 	Sleep(33);
 }
 
 void RenderInit()
 {
-	Point3D objectPosition = { -2.0f, 1.7f, 4, 1 };
+	//载入纹理图
+	hTextureBitmap = (HBITMAP)LoadImage(hInst, L"102.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+	//获取纹理的像素
+	GetDIBits(screen_hdc, hTextureBitmap, 0, TEXTURE_HEIGHT, TextureBuffer, (BITMAPINFO*)&binfoTex, DIB_RGB_COLORS);
+
+	Point3D objectPosition = { 1.8f, 0.5f, 4, 1 };
 
 	Point3D camerPos = { 0.0, 0.0f, 0, 1 };
-	Vector3D v = { 0, 1, -0.5, 0 };
-	camera = new UVNCamera(camerPos, objectPosition, v, 2, 4, 90, 1, SCREEN_WIDTH * 1.0f / SCREEN_HEIGHT);
+	Vector3D v = { 0, 1, 0.0, 0 };
+	camera = new UVNCamera(camerPos, { 0, 0, 1 }, v, 2, 4, 90, 1, SCREEN_WIDTH * 1.0f / SCREEN_HEIGHT);
 
 	device = new Device(camera, SCREEN_WIDTH, SCREEN_HEIGHT, Buffer, RENDER_STATE_WIREFRAME, 0xFFFFFFFF, 0xFFFF0000);
 
-	object = new Objecet(objectPosition, 12, list);
-	device->AddObjectList(object);
+	object1 = new Objecet(objectPosition, 12, list1, RENDER_STATE_TEXTURE);
+	object2 = new Objecet({ -2.0f, -1.5f, 5, 1 }, 12, list2, RENDER_STATE_COLOR);
+	device->AddObjectList(object1);
+	device->AddObjectList(object2);
 }
 
 void RenderEnd()
 {
 	device->ClearObjectList();
-	delete object;
+	delete object1;
+	delete object2;
 	delete device;
 	delete camera;
 	

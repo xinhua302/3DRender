@@ -9,6 +9,7 @@
 
 const int RENDER_STATE_WIREFRAME = 1;	// 渲染线框
 const int RENDER_STATE_COLOR = 2;		// 渲染颜色
+const int RENDER_STATE_TEXTURE = 4;		// 渲染纹理
 
 class Device
 {
@@ -220,11 +221,11 @@ public:
 		}
 		else if (triangle.vertex[1].newPos.y == triangle.vertex[2].newPos.y)
 		{
-			if (triangle.vertex[2].newPos.y > triangle.vertex[1].newPos.y)
+			if (triangle.vertex[0].newPos.y > triangle.vertex[1].newPos.y)
 			{
 				FillBottomTriangle(triangle);
 			}
-			else if (triangle.vertex[1].newPos.y < triangle.vertex[0].newPos.y)
+			else if (triangle.vertex[0].newPos.y < triangle.vertex[1].newPos.y)
 			{
 				FillTopTriangle(triangle);
 			}
@@ -239,14 +240,83 @@ public:
 			Linear2D linear2D(t.vertex[0].newPos.x, t.vertex[0].newPos.y, t.vertex[2].newPos.x, t.vertex[2].newPos.y);
 			float centerX = linear2D.InputYGetX(t.vertex[1].newPos.y);
 			Point3D centerPos = { centerX,  t.vertex[1].newPos.y , 0 };
-			UINT centerColor = GetInterpValue(t.vertex[0].newPos.x, t.vertex[0].newPos.y, t.vertex[0].color,
-				t.vertex[1].newPos.x, t.vertex[1].newPos.y, t.vertex[1].color, 
-				t.vertex[2].newPos.x, t.vertex[2].newPos.y, t.vertex[2].color,
+			UINT centerColorR = GetInterpValue(t.vertex[0].newPos.x, t.vertex[0].newPos.y, t.vertex[0].GetR(),
+				t.vertex[1].newPos.x, t.vertex[1].newPos.y, t.vertex[1].GetR(), 
+				t.vertex[2].newPos.x, t.vertex[2].newPos.y, t.vertex[2].GetR(),
 				centerX, t.vertex[1].newPos.y);
+			UINT centerColorG = GetInterpValue(t.vertex[0].newPos.x, t.vertex[0].newPos.y, t.vertex[0].GetG(),
+				t.vertex[1].newPos.x, t.vertex[1].newPos.y, t.vertex[1].GetG(),
+				t.vertex[2].newPos.x, t.vertex[2].newPos.y, t.vertex[2].GetG(),
+				centerX, t.vertex[1].newPos.y);
+			UINT centerColorB = GetInterpValue(t.vertex[0].newPos.x, t.vertex[0].newPos.y, t.vertex[0].GetB(),
+				t.vertex[1].newPos.x, t.vertex[1].newPos.y, t.vertex[1].GetB(),
+				t.vertex[2].newPos.x, t.vertex[2].newPos.y, t.vertex[2].GetB(),
+				centerX, t.vertex[1].newPos.y);
+			UINT centerColor = (centerColorR << 16) + (centerColorG << 8) + (centerColorB);
 			Triangle t1(t.vertex[0].newPos, centerPos, t.vertex[1].newPos, t.vertex[0].color, centerColor, t.vertex[1].color, true);
 			Triangle t2(centerPos, t.vertex[1].newPos, t.vertex[2].newPos, centerColor, t.vertex[1].color, t.vertex[2].color, true);
 			FillTopTriangle(t1);
 			FillBottomTriangle(t2);
+		}
+	}
+
+	//纹理
+	void DrawTriangleByTex(const Triangle &triangle)
+	{
+		if (triangle.vertex[0].newPos.y == triangle.vertex[1].newPos.y)
+		{
+			if (triangle.vertex[2].newPos.y > triangle.vertex[1].newPos.y)
+			{
+				FillBottomTriangleByTex(triangle);
+			}
+			else if (triangle.vertex[2].newPos.y < triangle.vertex[1].newPos.y)
+			{
+				FillTopTriangleByTex(triangle);
+			}
+		}
+		else if (triangle.vertex[0].newPos.y == triangle.vertex[2].newPos.y)
+		{
+			if (triangle.vertex[1].newPos.y > triangle.vertex[0].newPos.y)
+			{
+				FillBottomTriangleByTex(triangle);
+			}
+			else if (triangle.vertex[1].newPos.y < triangle.vertex[0].newPos.y)
+			{
+				FillTopTriangleByTex(triangle);
+			}
+		}
+		else if (triangle.vertex[1].newPos.y == triangle.vertex[2].newPos.y)
+		{
+			if (triangle.vertex[0].newPos.y > triangle.vertex[1].newPos.y)
+			{
+				FillBottomTriangleByTex(triangle);
+			}
+			else if (triangle.vertex[0].newPos.y < triangle.vertex[1].newPos.y)
+			{
+				FillTopTriangleByTex(triangle);
+			}
+		}
+		//不是平底也不是平顶,需要拆分
+		else
+		{
+			//从上到下排列顶点
+			Triangle t = triangle;
+			t.SortTopToBottom();
+			Linear2D linear2D(t.vertex[0].newPos.x, t.vertex[0].newPos.y, t.vertex[2].newPos.x, t.vertex[2].newPos.y);
+			float centerX = linear2D.InputYGetX(t.vertex[1].newPos.y);
+			Point3D centerPos = { centerX, t.vertex[1].newPos.y, 0 };
+			float centerU = GetInterpValue(t.vertex[0].newPos.x, t.vertex[0].newPos.y, t.vertex[0].uv.x,
+				t.vertex[1].newPos.x, t.vertex[1].newPos.y, t.vertex[1].uv.x,
+				t.vertex[2].newPos.x, t.vertex[2].newPos.y, t.vertex[2].uv.x,
+				centerX, t.vertex[1].newPos.y);
+			float centerV = GetInterpValue(t.vertex[0].newPos.x, t.vertex[0].newPos.y, t.vertex[0].uv.y,
+				t.vertex[1].newPos.x, t.vertex[1].newPos.y, t.vertex[1].uv.y,
+				t.vertex[2].newPos.x, t.vertex[2].newPos.y, t.vertex[2].uv.y,
+				centerX, t.vertex[1].newPos.y);
+			Triangle t1(t.vertex[0].newPos, centerPos, t.vertex[1].newPos, t.vertex[0].uv, {centerU, centerV}, t.vertex[1].uv, t.texBuffer, t.texWidth, t.texWidth, true);
+			Triangle t2(centerPos, t.vertex[1].newPos, t.vertex[2].newPos, { centerU, centerV }, t.vertex[1].uv, t.vertex[2].uv, t.texBuffer, t.texWidth, t.texWidth, true);
+			FillTopTriangleByTex(t1);
+			FillBottomTriangleByTex(t2);
 		}
 	}
 
@@ -321,7 +391,6 @@ public:
 		float xRight = (float)right.newPos.x;
 		int y = left.newPos.y;
 
-		//颜色
 		//R
 		float leftDxDivDyColorR = (top.GetR() - left.GetR()) / (top.newPos.y - left.newPos.y);
 		float rightDxDivDyColorR = (right.GetR() - top.GetR()) / (right.newPos.y - top.newPos.y);
@@ -368,6 +437,78 @@ public:
 
 			xLeftColorB -= leftDxDivDyColorB;
 			xRightColorB -= rightDxDivDyColorB;
+		}
+	}
+
+	//纹理
+	void FillTopTriangleByTex(const Triangle &t)
+	{
+		Vertex3D top, left, right;
+		if (t.vertex[0].newPos.y == t.vertex[1].newPos.y)
+		{
+			top = t.vertex[2];
+			left = t.vertex[0];
+			right = t.vertex[1];
+		}
+		else if (t.vertex[1].newPos.y == t.vertex[2].newPos.y)
+		{
+			top = t.vertex[0];
+			left = t.vertex[1];
+			right = t.vertex[2];
+		}
+		else
+		{
+			top = t.vertex[1];
+			left = t.vertex[0];
+			right = t.vertex[2];;
+		}
+		if (left.newPos.x > right.newPos.x)
+		{
+			Swap(left, right);
+		}
+		float leftDxDivDy = (top.newPos.x - left.newPos.x) / ((float)top.newPos.y - (float)left.newPos.y);
+		float rightDxDivDy = ((float)right.newPos.x - (float)top.newPos.x) / ((float)right.newPos.y - (float)top.newPos.y);
+		float xleft = (float)left.newPos.x;
+		float xRight = (float)right.newPos.x;
+		int y = left.newPos.y;
+
+		//U
+		float leftDxDivDyColorU = (top.uv.x - left.uv.x) / (top.newPos.y - left.newPos.y);
+		float rightDxDivDyColorU = (right.uv.x - top.uv.x) / (right.newPos.y - top.newPos.y);
+		float xLeftColorU = left.uv.x;
+		float xRightColorU = right.uv.x;
+		//V
+		float leftDxDivDyColorV = (top.uv.y - left.uv.y) / (top.newPos.y - left.newPos.y);
+		float rightDxDivDyColorV = (right.uv.y - top.uv.y) / (right.newPos.y - top.newPos.y);
+		float xLeftColorV = left.uv.y;
+		float xRightColorV = right.uv.y;
+
+		while (y >= top.newPos.y)
+		{
+			float dxColorU = (xRightColorU - xLeftColorU) / (xRight - xleft);
+			float ColorStarU = xLeftColorU;
+
+			float dxColorV = (xRightColorV - xLeftColorV) / (xRight - xleft);
+			float ColorStarV = xLeftColorV;
+
+			for (int i = (int)(xleft); i <= (int)(xRight); i++)
+			{
+				float u = ColorStarU * 256;
+				float v = ColorStarV * 256;
+				UINT color = t.texBuffer[(UINT)u + (UINT)v * (UINT)t.texWidth];
+				DrawPoint(i, y, color);
+				ColorStarU += dxColorU;
+				ColorStarV += dxColorV;
+			}
+			y--;
+			xleft -= leftDxDivDy;
+			xRight -= rightDxDivDy;
+
+			xLeftColorU -= leftDxDivDyColorU;
+			xRightColorU -= rightDxDivDyColorU;
+
+			xLeftColorV -= leftDxDivDyColorV;
+			xRightColorV -= rightDxDivDyColorV;
 		}
 	}
 
@@ -493,6 +634,78 @@ public:
 		}
 	}
 
+	//纹理
+	void FillBottomTriangleByTex(const Triangle &t)
+	{
+		Vertex3D bottom, left, right;
+		if (t.vertex[0].newPos.y == t.vertex[1].newPos.y)
+		{
+			bottom = t.vertex[2];
+			left = t.vertex[0];
+			right = t.vertex[1];
+		}
+		else if (t.vertex[1].newPos.y == t.vertex[2].newPos.y)
+		{
+			bottom = t.vertex[0];
+			left = t.vertex[1];
+			right = t.vertex[2];
+		}
+		else
+		{
+			bottom = t.vertex[1];
+			left = t.vertex[0];
+			right = t.vertex[2];;
+		}
+		if (left.newPos.x > right.newPos.x)
+		{
+			Swap(left, right);
+		}
+		float leftDxDivDy = (bottom.newPos.x - left.newPos.x) / ((float)bottom.newPos.y - (float)left.newPos.y);
+		float rightDxDivDy = ((float)right.newPos.x - (float)bottom.newPos.x) / ((float)right.newPos.y - (float)bottom.newPos.y);
+		float xleft = (float)left.newPos.x;
+		float xRight = (float)right.newPos.x;
+		int y = left.newPos.y;
+
+		//U
+		float leftDxDivDyColorU = (bottom.uv.x - left.uv.x) / (bottom.newPos.y - left.newPos.y);
+		float rightDxDivDyColorU = (right.uv.x - bottom.uv.x) / (right.newPos.y - bottom.newPos.y);
+		float xLeftColorU = left.uv.x;
+		float xRightColorU = right.uv.x;
+		//V
+		float leftDxDivDyColorV = (bottom.uv.y - left.uv.y) / (bottom.newPos.y - left.newPos.y);
+		float rightDxDivDyColorV = (right.uv.y - bottom.uv.y) / (right.newPos.y - bottom.newPos.y);
+		float xLeftColorV = left.uv.y;
+		float xRightColorV = right.uv.y;
+
+
+		while (y <= bottom.newPos.y)
+		{
+			float dxColorU = (xRightColorU - xLeftColorU) / (xRight - xleft);
+			float ColorStarU = xLeftColorU;
+
+			float dxColorV = (xRightColorV - xLeftColorV) / (xRight - xleft);
+			float ColorStarV = xLeftColorV;
+			for (int i = (int)(xleft); i <= (int)(xRight); i++)
+			{
+				float u = ColorStarU * 256;
+				float v = ColorStarV * 256;
+				UINT color = t.texBuffer[(UINT)u + (UINT)v * (UINT)t.texWidth];
+				DrawPoint(i, y, color);
+				ColorStarU += dxColorU;
+				ColorStarV += dxColorV;
+			}
+			y++;
+			xleft += leftDxDivDy;
+			xRight += rightDxDivDy;
+
+			xLeftColorU += leftDxDivDyColorU;
+			xRightColorU += rightDxDivDyColorU;
+
+			xLeftColorV += leftDxDivDyColorV;
+			xRightColorV += rightDxDivDyColorV;
+		}
+	}
+
 	//将物体加入渲染列表
 	void AddObjectList(Objecet *objecet)
 	{
@@ -508,14 +721,37 @@ public:
 	{
 		for (int i = 0; i < objectListCount; i++)
 		{
-			for (int j = 0; j < objecetList[i]->triangleCount; j++)
+			if (objecetList[i]->state == RENDER_STATE_WIREFRAME)
 			{
-				if (objecetList[i]->triangleList[j].state == TRIANGLE_BACKFACE)
-					continue;
+				for (int j = 0; j < objecetList[i]->triangleCount; j++)
+				{
+					if (objecetList[i]->triangleList[j].state == TRIANGLE_BACKFACE)
+						continue;
 
-				DrawTriangle(objecetList[i]->triangleList[j]);
-				//DrawTriangle(objecetList[i]->triangleList[j], 0xFFFF0000);
+					DrawTriangle(objecetList[i]->triangleList[j], foreground);
+				}
 			}
+			else if (objecetList[i]->state == RENDER_STATE_COLOR)
+			{
+				for (int j = 0; j < objecetList[i]->triangleCount; j++)
+				{
+					if (objecetList[i]->triangleList[j].state == TRIANGLE_BACKFACE)
+						continue;
+
+					DrawTriangle(objecetList[i]->triangleList[j]);
+				}
+			}
+			else if (objecetList[i]->state == RENDER_STATE_TEXTURE)
+			{
+				for (int j = 0; j < objecetList[i]->triangleCount; j++)
+				{
+					if (objecetList[i]->triangleList[j].state == TRIANGLE_BACKFACE)
+						continue;
+
+					DrawTriangleByTex(objecetList[i]->triangleList[j]);
+				}
+			}
+			
 		}
 	}
 
@@ -626,6 +862,17 @@ public:
 		}
 	}
 
+	void RenderTexture(UINT *texTureBuffer, int width, int height)
+	{
+		for (int i = 0; i < height; i++)
+		{
+			for (int j = 0; j < width; j++)
+			{
+				UINT color = texTureBuffer[j + width * i];
+				DrawPoint(j, i, color);
+			}
+		}
+	}
 
 private:
 	void Init(UVNCamera *camera, int width, int height, void *frameBuffer, int renderState, UINT foreground, UINT background)
@@ -651,6 +898,8 @@ private:
 			frameBuffer = nullptr;
 		}
 	}
+
+	
 private:
 	int width;
 	int height;
