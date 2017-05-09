@@ -5,6 +5,7 @@
 #define __GEOMETRYDEFINE_H
 #include "3DMath.h"
 
+const int TRIANGLE_FOREFACE = 0;
 const int TRIANGLE_BACKFACE = 1;
 const int TRIANGLE_CLIPPED = 2;
 

@@ -38,16 +38,17 @@ void RenderInit();
 void RenderMain();
 void RenderEnd();
 void Display();
+void Input(WPARAM wParam);
 
 int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
-                     _In_opt_ HINSTANCE hPrevInstance,
-                     _In_ LPTSTR    lpCmdLine,
-                     _In_ int       nCmdShow)
+	_In_opt_ HINSTANCE hPrevInstance,
+	_In_ LPTSTR    lpCmdLine,
+	_In_ int       nCmdShow)
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
- 	// TODO:  在此放置代码。
+	// TODO:  在此放置代码。
 	MSG msg;
 	HACCEL hAccelTable;
 
@@ -57,7 +58,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	MyRegisterClass(hInstance);
 
 	// 执行应用程序初始化: 
-	if (!InitInstance (hInstance, nCmdShow))
+	if (!InitInstance(hInstance, nCmdShow))
 	{
 		return FALSE;
 	}
@@ -73,11 +74,11 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 			DispatchMessage(&msg);
 		}
 		RenderMain();
-		
+
 	}
 	RenderEnd();
 
-	return (int) msg.wParam;
+	return (int)msg.wParam;
 }
 
 
@@ -93,17 +94,17 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 
 	wcex.cbSize = sizeof(WNDCLASSEX);
 
-	wcex.style			= CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc	= WndProc;
-	wcex.cbClsExtra		= 0;
-	wcex.cbWndExtra		= 0;
-	wcex.hInstance		= hInstance;
-	wcex.hIcon			= LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MY3DRENDER));
-	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
+	wcex.style = CS_HREDRAW | CS_VREDRAW;
+	wcex.lpfnWndProc = WndProc;
+	wcex.cbClsExtra = 0;
+	wcex.cbWndExtra = 0;
+	wcex.hInstance = hInstance;
+	wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MY3DRENDER));
+	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wcex.lpszMenuName = nullptr;
-	wcex.lpszClassName	= szWindowClass;
-	wcex.hIconSm		= LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+	wcex.lpszClassName = szWindowClass;
+	wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
 	return RegisterClassEx(&wcex);
 }
@@ -120,63 +121,63 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-   HWND hWnd;
+	HWND hWnd;
 
-   hInst = hInstance; // 将实例句柄存储在全局变量中
+	hInst = hInstance; // 将实例句柄存储在全局变量中
 
-   hWnd = CreateWindow(szWindowClass, szTitle, WS_CAPTION | WS_SYSMENU,
-      CW_USEDEFAULT, 0, SCREEN_WIDTH, SCREEN_HEIGHT, NULL, NULL, hInstance, NULL);
+	hWnd = CreateWindow(szWindowClass, szTitle, WS_CAPTION | WS_SYSMENU,
+		CW_USEDEFAULT, 0, SCREEN_WIDTH, SCREEN_HEIGHT, NULL, NULL, hInstance, NULL);
 
-   if (!hWnd)
-   {
-      return FALSE;
-   }
+	if (!hWnd)
+	{
+		return FALSE;
+	}
 
-   RECT  rectProgram, rectClient;
-   GetWindowRect(hWnd, &rectProgram);   //获得程序窗口位于屏幕坐标
-   GetClientRect(hWnd, &rectClient);      //获得客户区坐标
-   //非客户区宽,高
-   int nWidth = rectProgram.right - rectProgram.left - (rectClient.right - rectClient.left);
-   int nHeiht = rectProgram.bottom - rectProgram.top - (rectClient.bottom - rectClient.top);
-   nWidth += SCREEN_WIDTH;
-   nHeiht += SCREEN_HEIGHT;
-   rectProgram.right = nWidth;
-   rectProgram.bottom = nHeiht;
-   int showToScreenx = GetSystemMetrics(SM_CXSCREEN) / 2 - nWidth / 2;    //居中处理
-   int showToScreeny = GetSystemMetrics(SM_CYSCREEN) / 2 - nHeiht / 2;
-   MoveWindow(hWnd, showToScreenx, showToScreeny, rectProgram.right, rectProgram.bottom, false);
+	RECT  rectProgram, rectClient;
+	GetWindowRect(hWnd, &rectProgram);   //获得程序窗口位于屏幕坐标
+	GetClientRect(hWnd, &rectClient);      //获得客户区坐标
+	//非客户区宽,高
+	int nWidth = rectProgram.right - rectProgram.left - (rectClient.right - rectClient.left);
+	int nHeiht = rectProgram.bottom - rectProgram.top - (rectClient.bottom - rectClient.top);
+	nWidth += SCREEN_WIDTH;
+	nHeiht += SCREEN_HEIGHT;
+	rectProgram.right = nWidth;
+	rectProgram.bottom = nHeiht;
+	int showToScreenx = GetSystemMetrics(SM_CXSCREEN) / 2 - nWidth / 2;    //居中处理
+	int showToScreeny = GetSystemMetrics(SM_CYSCREEN) / 2 - nHeiht / 2;
+	MoveWindow(hWnd, showToScreenx, showToScreeny, rectProgram.right, rectProgram.bottom, false);
 
-   memset(&binfo, 0, sizeof(BITMAPINFO));
-   binfo.bmiHeader.biBitCount = BITS;      //每个像素多少位，也可直接写24(RGB)或者32(RGBA)  
-   binfo.bmiHeader.biCompression = BI_RGB;
-   binfo.bmiHeader.biHeight = -SCREEN_HEIGHT;
-   binfo.bmiHeader.biPlanes = 1;
-   binfo.bmiHeader.biSizeImage = 0;
-   binfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-   binfo.bmiHeader.biWidth = SCREEN_WIDTH;
+	memset(&binfo, 0, sizeof(BITMAPINFO));
+	binfo.bmiHeader.biBitCount = BITS;      //每个像素多少位，也可直接写24(RGB)或者32(RGBA)  
+	binfo.bmiHeader.biCompression = BI_RGB;
+	binfo.bmiHeader.biHeight = -SCREEN_HEIGHT;
+	binfo.bmiHeader.biPlanes = 1;
+	binfo.bmiHeader.biSizeImage = 0;
+	binfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	binfo.bmiHeader.biWidth = SCREEN_WIDTH;
 
-   memset(&binfoTex, 0, sizeof(BITMAPINFO));
-   binfoTex.bmiHeader.biBitCount = BITS;      //每个像素多少位，也可直接写24(RGB)或者32(RGBA)  
-   binfoTex.bmiHeader.biCompression = BI_RGB;
-   binfoTex.bmiHeader.biHeight = -TEXTURE_HEIGHT;
-   binfoTex.bmiHeader.biPlanes = 1;
-   binfoTex.bmiHeader.biSizeImage = 0;
-   binfoTex.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-   binfoTex.bmiHeader.biWidth = TEXTURE_WIDTH;
+	memset(&binfoTex, 0, sizeof(BITMAPINFO));
+	binfoTex.bmiHeader.biBitCount = BITS;      //每个像素多少位，也可直接写24(RGB)或者32(RGBA)  
+	binfoTex.bmiHeader.biCompression = BI_RGB;
+	binfoTex.bmiHeader.biHeight = -TEXTURE_HEIGHT;
+	binfoTex.bmiHeader.biPlanes = 1;
+	binfoTex.bmiHeader.biSizeImage = 0;
+	binfoTex.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	binfoTex.bmiHeader.biWidth = TEXTURE_WIDTH;
 
-   //获取屏幕HDC  
-   screen_hwnd = hWnd;
-   screen_hdc = GetDC(screen_hwnd);
+	//获取屏幕HDC  
+	screen_hwnd = hWnd;
+	screen_hdc = GetDC(screen_hwnd);
 
-   //获取兼容HDC和兼容Bitmap,兼容Bitmap选入兼容HDC(每个HDC内存每时刻仅能选入一个GDI资源,GDI资源要选入HDC才能进行绘制)  
-   hCompatibleDC = CreateCompatibleDC(screen_hdc);
-   hCompatibleBitmap = CreateCompatibleBitmap(screen_hdc, SCREEN_WIDTH, SCREEN_HEIGHT);
-   hOldBitmap = (HBITMAP)SelectObject(hCompatibleDC, hCompatibleBitmap);
+	//获取兼容HDC和兼容Bitmap,兼容Bitmap选入兼容HDC(每个HDC内存每时刻仅能选入一个GDI资源,GDI资源要选入HDC才能进行绘制)  
+	hCompatibleDC = CreateCompatibleDC(screen_hdc);
+	hCompatibleBitmap = CreateCompatibleBitmap(screen_hdc, SCREEN_WIDTH, SCREEN_HEIGHT);
+	hOldBitmap = (HBITMAP)SelectObject(hCompatibleDC, hCompatibleBitmap);
 
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
+	ShowWindow(hWnd, nCmdShow);
+	UpdateWindow(hWnd);
 
-   return TRUE;
+	return TRUE;
 }
 
 //
@@ -204,6 +205,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
+
+	case WM_KEYDOWN:        //键盘按键被按下
+		Input(wParam);
+		break;
+
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
@@ -224,15 +230,15 @@ Objecet *object2;
 Point3D mesh[8] = {
 	{ 1, -1, 1, 1 },
 	{ -1, -1, 1, 1 },
-	{ -1,  1, 1, 1 },
-	{ 1,  1, 1, 1 },
+	{ -1, 1, 1, 1 },
+	{ 1, 1, 1, 1 },
 	{ 1, -1, -1, 1 },
 	{ -1, -1, -1, 1 },
-	{ -1,  1, -1, 1 },
-	{ 1,  1, -1, 1 },
+	{ -1, 1, -1, 1 },
+	{ 1, 1, -1, 1 },
 };
 
-UINT color[8] = { 0x00FF0000 , 0x0000FF00 , 0x000000FF , 0x00FF0000 , 0x0000FF00 , 0x000000FF , 0x00FF0000 , 0x0000FF00 };
+UINT color[8] = { 0x00FF0000, 0x0000FF00, 0x000000FF, 0x00FF0000, 0x0000FF00, 0x000000FF, 0x00FF0000, 0x0000FF00 };
 //12个三角形
 Triangle T1(mesh[0], mesh[1], mesh[2], color[0], color[1], color[2]);
 Triangle T2(mesh[2], mesh[3], mesh[1], color[2], color[3], color[1]);
@@ -294,9 +300,9 @@ void RenderInit()
 
 	Point3D objectPosition = { 1.9f, 0.5f, 4, 1 };
 
-	Point3D camerPos = { -0.5, 2.0f, 0, 1 };
+	Point3D camerPos = {0.0, 0.0f, 0, 1 };
 	Vector3D v = { 0, 1, 0.0, 0 };
-	camera = new UVNCamera(camerPos, objectPosition, v, 2, 4, 90, 1, SCREEN_WIDTH * 1.0f / SCREEN_HEIGHT);
+	camera = new UVNCamera(camerPos, {0,0,1}, v, 2, 4, 90, 1, SCREEN_WIDTH * 1.0f / SCREEN_HEIGHT);
 
 	device = new Device(camera, SCREEN_WIDTH, SCREEN_HEIGHT, Buffer, RENDER_STATE_WIREFRAME, 0xFFFFFFFF, 0xFFFF0000);
 
@@ -313,7 +319,7 @@ void RenderEnd()
 	delete object2;
 	delete device;
 	delete camera;
-	
+
 }
 
 void Display()
@@ -321,4 +327,51 @@ void Display()
 	//将颜色数据打印到屏幕上，这下面两个函数每帧都得调用  
 	SetDIBits(screen_hdc, hCompatibleBitmap, 0, SCREEN_HEIGHT, Buffer, (BITMAPINFO*)&binfo, DIB_RGB_COLORS);
 	BitBlt(screen_hdc, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hCompatibleDC, 0, 0, SRCCOPY);
+}
+
+void Input(WPARAM wParam)
+{
+	switch (wParam)
+	{
+	case VK_UP:            //方向键上
+		if (camera != nullptr)
+		{
+			Point3D pos = camera->GetPosition();
+			camera->SetPosition(pos.x, pos.y + 0.1f, pos.z);
+		}
+		break;
+	case VK_DOWN:        //方向键下
+		if (camera != nullptr)
+		{
+			Point3D pos = camera->GetPosition();
+			camera->SetPosition(pos.x, pos.y - 0.1f, pos.z);
+		}
+		break;
+	case VK_LEFT:        //方向键左
+		if (camera != nullptr)
+		{
+			Point3D pos = camera->GetPosition();
+			camera->SetPosition(pos.x - 0.1f, pos.y, pos.z);
+		}
+		break;
+	case VK_RIGHT:        //方向键右
+		if (camera != nullptr)
+		{
+			Point3D pos = camera->GetPosition();
+			camera->SetPosition(pos.x + 0.1f, pos.y, pos.z);
+		}
+		break;
+	case VK_NUMPAD2:
+		if (camera != nullptr)
+		{
+
+		}
+		break;
+	case VK_NUMPAD8:
+		if (camera != nullptr)
+		{
+
+		}
+		break;
+	}
 }

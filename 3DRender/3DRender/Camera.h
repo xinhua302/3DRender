@@ -8,6 +8,13 @@
 class UVNCamera
 {
 public:
+	void SetPosition(float x, float y, float z)
+	{
+		this->position.x = x;
+		this->position.y = y;
+		this->position.z = z;
+		CalculateMatCamera();
+	}
 	Point3D GetPosition() const
  	{
 		return position;
@@ -81,6 +88,7 @@ private:
 			u.z, v.z, n.z, 0,
 			-position.x,-position.y,-position.z,1 };
 	}
+
 
 private:
 	Point3D position;	//Ïà»ú×ø±ê

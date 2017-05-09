@@ -29,7 +29,7 @@ public:
 	}
 	void Clear()
 	{
-		memset(frameBuffer, 0, sizeof(UINT)* width * height);
+		memset(frameBuffer, 99, sizeof(UINT)* width * height);
 	}
 public:
 	Device(UVNCamera *camera, int width, int height, void *frameBuffer, int renderState, UINT foreground, UINT background)
@@ -372,19 +372,19 @@ public:
 				t.vertex[2].newPos.x, t.vertex[2].newPos.y, 1 / t.vertex[2].newPos.z,
 				centerX, t.vertex[1].newPos.y));
 			Point3D centerPos = { centerX, t.vertex[1].newPos.y, centerZ };
-			float centerU = GetInterpValue(t.vertex[0].newPos.x, t.vertex[0].newPos.y, t.vertex[0].uv.x,
-				t.vertex[1].newPos.x, t.vertex[1].newPos.y, t.vertex[1].uv.x,
-				t.vertex[2].newPos.x, t.vertex[2].newPos.y, t.vertex[2].uv.x,
+			float centerU = GetInterpValue(t.vertex[0].newPos.x, t.vertex[0].newPos.y, t.vertex[0].uv.x / t.vertex[0].newPos.z,
+				t.vertex[1].newPos.x, t.vertex[1].newPos.y, t.vertex[1].uv.x / t.vertex[1].newPos.z,
+				t.vertex[2].newPos.x, t.vertex[2].newPos.y, t.vertex[2].uv.x / t.vertex[2].newPos.z,
 				centerX, t.vertex[1].newPos.y);
-			float centerV = GetInterpValue(t.vertex[0].newPos.x, t.vertex[0].newPos.y, t.vertex[0].uv.y,
-				t.vertex[1].newPos.x, t.vertex[1].newPos.y, t.vertex[1].uv.y,
-				t.vertex[2].newPos.x, t.vertex[2].newPos.y, t.vertex[2].uv.y,
+			float centerV = GetInterpValue(t.vertex[0].newPos.x, t.vertex[0].newPos.y, t.vertex[0].uv.y / t.vertex[0].newPos.z,
+				t.vertex[1].newPos.x, t.vertex[1].newPos.y, t.vertex[1].uv.y / t.vertex[1].newPos.z,
+				t.vertex[2].newPos.x, t.vertex[2].newPos.y, t.vertex[2].uv.y / t.vertex[2].newPos.z,
 				centerX, t.vertex[1].newPos.y);
 
-			Point2D centerUV = { centerU, centerV };
+			Point2D centerUV = { centerU * centerZ, centerV * centerZ };
 
-			Triangle t1(t.vertex[0].newPos, centerPos, t.vertex[1].newPos, t.vertex[0].uv, centerUV, t.vertex[1].uv, t.texBuffer, t.texWidth, t.texWidth, true);
-			Triangle t2(centerPos, t.vertex[1].newPos, t.vertex[2].newPos, centerUV, t.vertex[1].uv, t.vertex[2].uv, t.texBuffer, t.texWidth, t.texWidth, true);
+			Triangle t1(t.vertex[0].newPos, centerPos, t.vertex[1].newPos, t.vertex[0].uv, centerUV, t.vertex[1].uv, t.texBuffer, t.texWidth, t.texHeight, true);
+			Triangle t2(centerPos, t.vertex[1].newPos, t.vertex[2].newPos, centerUV, t.vertex[1].uv, t.vertex[2].uv, t.texBuffer, t.texWidth, t.texHeight, true);
 			FillTopTriangleByTexCorrect(t1);
 			FillBottomTriangleByTexCorrect(t2);
 		}
@@ -421,9 +421,10 @@ public:
 		float xleft = (float)left.x;
 		float xRight = (float)right.x;
 		int y = left.y;
+		y--;
 		while (y >= top.y)
 		{
-			DrawLine((int)(xleft), y, (int)(xRight), y, color);
+			DrawLine((int)(xleft), y, (int)(xRight)-1, y, color);
 			y--;
 			xleft -= leftDxDivDy;
 			xRight -= rightDxDivDy;
@@ -476,7 +477,7 @@ public:
 		float rightDxDivDyColorB = (right.GetB() - top.GetB()) / (right.newPos.y - top.newPos.y);
 		float xLeftColorB = left.GetB();
 		float xRightColorB = right.GetB();
-
+		y--;
 		while (y >= top.newPos.y)
 		{
 			float dxColorR = (xRightColorR - xLeftColorR) / (xRight - xleft);
@@ -487,7 +488,7 @@ public:
 
 			float dxColorB = (xRightColorB - xLeftColorB) / (xRight - xleft);
 			float ColorStarB = xLeftColorB;
-			for (int i = (int)(xleft); i <= (int)(xRight); i++)
+			for (int i = (int)(xleft); i < (int)(xRight); i++)
 			{
 				UINT color = (((UINT)ColorStarR) << 16) + (((UINT)ColorStarG) << 8) + (((UINT)ColorStarB));
 				DrawPoint(i, y, color);
@@ -634,7 +635,7 @@ public:
 		float rightDxDivDyColorV = (right.uv.y / right.newPos.z - top.uv.y/ top.newPos.z) / (right.newPos.y - top.newPos.y);
 		float xLeftColorV = left.uv.y / left.newPos.z;
 		float xRightColorV = right.uv.y / right.newPos.z;
-
+		y--;
 		while (y >= top.newPos.y)
 		{
 			float dxReciprocalZ = (xRightReciprocalZ - xLeftReciprocalZ) / (xRight - xleft);
@@ -646,10 +647,10 @@ public:
 			float dxColorV = (xRightColorV - xLeftColorV) / (xRight - xleft);
 			float ColorStarV = xLeftColorV;
 
-			for (int i = (int)(xleft); i <= (int)(xRight); i++)
+			for (int i = (int)(xleft); i < (int)(xRight); i++)
 			{
-				float u = (ColorStarU / reciprocalZ) * (t.texWidth - 1);
-				float v = (ColorStarV / reciprocalZ) * (t.texHeight - 1);
+				float u = (ColorStarU / reciprocalZ) * (t.texWidth-1);
+				float v = (ColorStarV / reciprocalZ) * (t.texHeight-1);
 				if (u < 0 || v < 0 || u >= t.texWidth || v >= t.texHeight)
 				{
 					int haa = 0;
@@ -707,9 +708,9 @@ public:
 		float xleft = (float)left.x;
 		float xRight = (float)right.x;
 		int y = left.y;
-		while (y <= bottom.y)
+		while (y < bottom.y)
 		{
-			DrawLine((int)(xleft), y, (int)(xRight), y, color);
+			DrawLine((int)(xleft), y, (int)(xRight)-1, y, color);
 			y++;
 			xleft += leftDxDivDy;
 			xRight += rightDxDivDy;
@@ -764,7 +765,7 @@ public:
 		float xLeftColorB = left.GetB();
 		float xRightColorB = right.GetB();
 
-		while (y <= bottom.newPos.y)
+		while (y < bottom.newPos.y)
 		{
 			float dxColorR = (xRightColorR - xLeftColorR) / (xRight - xleft);
 			float ColorStarR = xLeftColorR;
@@ -774,7 +775,7 @@ public:
 
 			float dxColorB = (xRightColorB - xLeftColorB) / (xRight - xleft);
 			float ColorStarB = xLeftColorB;
-			for (int i = (int)(xleft); i <= (int)(xRight); i++)
+			for (int i = (int)(xleft); i < (int)(xRight); i++)
 			{
 				UINT color = (((UINT)ColorStarR) << 16) + (((UINT)ColorStarG) << 8) + (((UINT)ColorStarB));
  				DrawPoint(i, y, color);
@@ -922,8 +923,7 @@ public:
 		float xLeftColorV = left.uv.y / left.newPos.z;
 		float xRightColorV = right.uv.y / right.newPos.z;
 
-
-		while (y <= bottom.newPos.y)
+		while (y < bottom.newPos.y)
 		{
 			float dxReciprocalZ = (xRightReciprocalZ - xLeftReciprocalZ) / (xRight - xleft);
 			float reciprocalZ = xLeftReciprocalZ;
@@ -933,10 +933,10 @@ public:
 
 			float dxColorV = (xRightColorV - xLeftColorV) / (xRight - xleft);
 			float ColorStarV = xLeftColorV;
-			for (int i = (int)(xleft); i <= (int)(xRight); i++)
+			for (int i = (int)(xleft); i < (int)(xRight); i++)
 			{
-				float u = (ColorStarU / reciprocalZ) * (t.texWidth - 1);
-				float v = (ColorStarV / reciprocalZ) * (t.texHeight - 1);
+				float u = (ColorStarU / reciprocalZ) * (t.texWidth-1);
+				float v = (ColorStarV / reciprocalZ) * (t.texHeight-1);
 				if (u < 0 || v < 0 || u >= t.texWidth || v >= t.texHeight)
 				{
 					int haa = 0;
@@ -1005,7 +1005,7 @@ public:
 						continue;
 
 					DrawTriangleByTexCorrect(objecetList[i]->triangleList[j]);
-					//DrawTriangle(objecetList[i]->triangleList[j], 0x00FF0000);
+					
 				}
 			}
 			
@@ -1018,7 +1018,7 @@ public:
 		objectListCount = 0;
 	}
 
-	//相机变换
+	//相机变换ss
 	void WorldToCamera()
 	{
 		for (int i = 0; i < objectListCount; i++)
@@ -1053,6 +1053,10 @@ public:
 				if (dot <= 0.0f)
 				{
 					objecetList[i]->triangleList[j].state = TRIANGLE_BACKFACE;
+				}
+				else
+				{
+					objecetList[i]->triangleList[j].state = TRIANGLE_FOREFACE;
 				}
 			}
 		}
