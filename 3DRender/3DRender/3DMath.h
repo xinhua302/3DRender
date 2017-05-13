@@ -30,6 +30,21 @@ struct Vector3D
 	{
 		return Vector3D{ this->x - v.x, this->y - v.y, this->z - v.z, 0 };
 	}
+
+	Vector3D operator+(const Vector3D & v)
+	{
+		return Vector3D{ this->x + v.x, this->y + v.y, this->z + v.z, 0 };
+	}
+
+	Vector3D operator+(const Vector3D & v) const
+	{
+		return Vector3D{ this->x + v.x, this->y + v.y, this->z + v.z, 0 };
+	}
+
+	Vector3D operator/(float x)
+	{
+		return Vector3D{ this->x / x, this->y / x, this->z / x, 0 };
+	}
 };
 
 //2DоРа©

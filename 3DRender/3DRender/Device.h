@@ -19,8 +19,8 @@ public:
 	{
 		Clear();
 		LocalToWorld();
-		WorldToCamera();
 		RemoveBackfaceTriangle();
+		WorldToCamera();
 		Projection();
 		ViewTransform();
 		RenderObject();
@@ -30,6 +30,7 @@ public:
 	void Clear()
 	{
 		memset(frameBuffer, 99, sizeof(UINT)* width * height);
+		memset(depthBuffer, 0, sizeof(float)* width * height);
 	}
 public:
 	Device(UVNCamera *camera, int width, int height, void *frameBuffer, int renderState, UINT foreground, UINT background)
@@ -128,15 +129,15 @@ public:
 		DrawLine(p1.x, p1.y, p2.x, p2.y, color);
 	}
 	//画三角形
-	void DrawTriangle(const Point2D &p1, const Point2D &p2, const Point2D &p3, UINT color)
+	void DrawTriangle(const Point2D &p1, const Point2D &p2, const Point2D &p3, UINT color, int mode)
 	{
-		if (RENDER_STATE_WIREFRAME == renderState)
+		if (RENDER_STATE_WIREFRAME == mode)
 		{
 			DrawLine(p1, p2, color);
 			DrawLine(p2, p3, color);
 			DrawLine(p3, p1, color);
 		}
-		else if (RENDER_STATE_COLOR == renderState)
+		else if (RENDER_STATE_COLOR == mode)
 		{
 			//是否是平底或平顶三角形
 			if (p1.y == p2.y)
@@ -188,12 +189,12 @@ public:
 			}
 		}
 	}
-	void DrawTriangle(const Triangle &triangle, UINT color)
+	void DrawTriangle(const Triangle &triangle, UINT color, int mode)
 	{
 		Point2D p1 = { (int)triangle.vertex[0].newPos.x, (int)triangle.vertex[0].newPos.y };
 		Point2D p2 = { (int)triangle.vertex[1].newPos.x, (int)triangle.vertex[1].newPos.y };
 		Point2D p3 = { (int)triangle.vertex[2].newPos.x, (int)triangle.vertex[2].newPos.y };
-		DrawTriangle(p1, p2, p3, color);
+		DrawTriangle(p1, p2, p3, color, mode);
 	}
 	void DrawTriangle(const Triangle &triangle)
 	{
@@ -239,7 +240,11 @@ public:
 			//(y - b) / k
 			Linear2D linear2D(t.vertex[0].newPos.x, t.vertex[0].newPos.y, t.vertex[2].newPos.x, t.vertex[2].newPos.y);
 			float centerX = linear2D.InputYGetX(t.vertex[1].newPos.y);
-			Point3D centerPos = { centerX,  t.vertex[1].newPos.y , 0 };
+			float centerZ = 1 / (GetInterpValue(t.vertex[0].newPos.x, t.vertex[0].newPos.y, 1 / t.vertex[0].newPos.z,
+				t.vertex[1].newPos.x, t.vertex[1].newPos.y, 1 / t.vertex[1].newPos.z,
+				t.vertex[2].newPos.x, t.vertex[2].newPos.y, 1 / t.vertex[2].newPos.z,
+				centerX, t.vertex[1].newPos.y));
+			Point3D centerPos = { centerX, t.vertex[1].newPos.y, centerZ };
 			UINT centerColorR = GetInterpValue(t.vertex[0].newPos.x, t.vertex[0].newPos.y, t.vertex[0].GetR(),
 				t.vertex[1].newPos.x, t.vertex[1].newPos.y, t.vertex[1].GetR(), 
 				t.vertex[2].newPos.x, t.vertex[2].newPos.y, t.vertex[2].GetR(),
@@ -462,6 +467,11 @@ public:
 		float xRight = (float)right.newPos.x;
 		int y = left.newPos.y;
 
+		//1/Z
+		float leftDxDivDyReciprocalZ = ((1 / top.newPos.z) - (1 / left.newPos.z)) / (top.newPos.y - left.newPos.y);
+		float rightDxDivDyReciprocalZ = ((1 / right.newPos.z) - (1 / top.newPos.z)) / (right.newPos.y - top.newPos.y);
+		float xLeftReciprocalZ = 1 / left.newPos.z;
+		float xRightReciprocalZ = 1 / right.newPos.z;
 		//R
 		float leftDxDivDyColorR = (top.GetR() - left.GetR()) / (top.newPos.y - left.newPos.y);
 		float rightDxDivDyColorR = (right.GetR() - top.GetR()) / (right.newPos.y - top.newPos.y);
@@ -480,6 +490,9 @@ public:
 		y--;
 		while (y >= top.newPos.y)
 		{
+			float dxReciprocalZ = (xRightReciprocalZ - xLeftReciprocalZ) / (xRight - xleft);
+			float reciprocalZ = xLeftReciprocalZ;
+
 			float dxColorR = (xRightColorR - xLeftColorR) / (xRight - xleft);
 			float ColorStarR = xLeftColorR;
 
@@ -489,16 +502,23 @@ public:
 			float dxColorB = (xRightColorB - xLeftColorB) / (xRight - xleft);
 			float ColorStarB = xLeftColorB;
 			for (int i = (int)(xleft); i < (int)(xRight); i++)
-			{
-				UINT color = (((UINT)ColorStarR) << 16) + (((UINT)ColorStarG) << 8) + (((UINT)ColorStarB));
-				DrawPoint(i, y, color);
+			{		
+				if (TestZ(i, y, reciprocalZ))
+				{
+					UINT color = (((UINT)ColorStarR) << 16) + (((UINT)ColorStarG) << 8) + (((UINT)ColorStarB));
+					DrawPoint(i, y, color);
+				}
 				ColorStarR += dxColorR;
 				ColorStarG += dxColorG;
 				ColorStarB += dxColorB;
+				reciprocalZ += dxReciprocalZ;
 			}
 			y--;
 			xleft -= leftDxDivDy;
 			xRight -= rightDxDivDy;
+
+			xLeftReciprocalZ -= leftDxDivDyReciprocalZ;
+			xRightReciprocalZ -= rightDxDivDyReciprocalZ;
 
 			xLeftColorR -= leftDxDivDyColorR;
 			xRightColorR -= rightDxDivDyColorR;
@@ -655,8 +675,11 @@ public:
 				{
 					int haa = 0;
 				}
-				UINT color = t.texBuffer[(UINT)u + (UINT)v * (UINT)t.texWidth];
-				DrawPoint(i, y, color);
+				if (TestZ(i, y, reciprocalZ))
+				{
+					UINT color = t.texBuffer[(UINT)u + (UINT)v * (UINT)t.texWidth];
+					DrawPoint(i, y, color);
+				}
 				ColorStarU += dxColorU;
 				ColorStarV += dxColorV;
 				reciprocalZ += dxReciprocalZ;
@@ -748,6 +771,12 @@ public:
 		float xRight = (float)right.newPos.x;
 		int y = left.newPos.y;
 
+		//1/Z
+		float leftDxDivDyReciprocalZ = ((1 / bottom.newPos.z) - (1 / left.newPos.z)) / (bottom.newPos.y - left.newPos.y);
+		float rightDxDivDyReciprocalZ = ((1 / right.newPos.z) - (1 / bottom.newPos.z)) / (right.newPos.y - bottom.newPos.y);
+		float xLeftReciprocalZ = 1 / left.newPos.z;
+		float xRightReciprocalZ = 1 / right.newPos.z;
+
 		//颜色
 		//R
 		float leftDxDivDyColorR= (bottom.GetR() - left.GetR()) / (bottom.newPos.y - left.newPos.y);
@@ -767,6 +796,9 @@ public:
 
 		while (y < bottom.newPos.y)
 		{
+			float dxReciprocalZ = (xRightReciprocalZ - xLeftReciprocalZ) / (xRight - xleft);
+			float reciprocalZ = xLeftReciprocalZ;
+
 			float dxColorR = (xRightColorR - xLeftColorR) / (xRight - xleft);
 			float ColorStarR = xLeftColorR;
 
@@ -777,15 +809,22 @@ public:
 			float ColorStarB = xLeftColorB;
 			for (int i = (int)(xleft); i < (int)(xRight); i++)
 			{
-				UINT color = (((UINT)ColorStarR) << 16) + (((UINT)ColorStarG) << 8) + (((UINT)ColorStarB));
- 				DrawPoint(i, y, color);
+				if (TestZ(i, y, reciprocalZ))
+				{
+					UINT color = (((UINT)ColorStarR) << 16) + (((UINT)ColorStarG) << 8) + (((UINT)ColorStarB));
+					DrawPoint(i, y, color);
+				}
 				ColorStarR+= dxColorR;
 				ColorStarG += dxColorG;
 				ColorStarB += dxColorB;
+				reciprocalZ += dxReciprocalZ;
 			}
 			y++;
 			xleft += leftDxDivDy;
 			xRight += rightDxDivDy;
+
+			xLeftReciprocalZ += leftDxDivDyReciprocalZ;
+			xRightReciprocalZ += rightDxDivDyReciprocalZ;
 
 			xLeftColorR += leftDxDivDyColorR;
 			xRightColorR += rightDxDivDyColorR;
@@ -941,8 +980,12 @@ public:
 				{
 					int haa = 0;
 				}
-				UINT color = t.texBuffer[(UINT)u + (UINT)v * (UINT)t.texWidth];
-				DrawPoint(i, y, color);
+				if (TestZ(i, y, reciprocalZ))
+				{
+					UINT color = t.texBuffer[(UINT)u + (UINT)v * (UINT)t.texWidth];
+					DrawPoint(i, y, color);
+				}
+				
 				ColorStarU += dxColorU;
 				ColorStarV += dxColorV;
 				reciprocalZ += dxReciprocalZ;
@@ -984,7 +1027,7 @@ public:
 					if (objecetList[i]->triangleList[j].state == TRIANGLE_BACKFACE)
 						continue;
 
-					DrawTriangle(objecetList[i]->triangleList[j], foreground);
+					DrawTriangle(objecetList[i]->triangleList[j], foreground, RENDER_STATE_WIREFRAME);
 				}
 			}
 			else if (objecetList[i]->state == RENDER_STATE_COLOR)
@@ -1003,7 +1046,7 @@ public:
 				{
 					if (objecetList[i]->triangleList[j].state == TRIANGLE_BACKFACE)
 						continue;
-
+					DrawTriangle(objecetList[i]->triangleList[j], 0x000000FF, RENDER_STATE_WIREFRAME);
 					DrawTriangleByTexCorrect(objecetList[i]->triangleList[j]);
 					
 				}
@@ -1142,12 +1185,13 @@ private:
 		this->width = width;
 		this->height = height;
 		this->frameBuffer = (UINT*)frameBuffer;
+		depthBuffer = (float*)malloc(sizeof(float)*width * height);
 		this->renderState = renderState;
 		this->foreground = foreground;
 		this->background = background;
 		this->clipMinX = 0;
 		this->clipMinY = 0;
-		this->clipMaxX = width;
+		this->clipMaxX = width;	
 		this->clipMaxY = height;
 		objectListCount = 0;
 	}
@@ -1158,6 +1202,29 @@ private:
 			delete frameBuffer;
 			frameBuffer = nullptr;
 		}
+
+		if (depthBuffer != nullptr)
+		{
+			free(depthBuffer);
+		}
+	}
+
+	bool TestZ(UINT x, UINT y, float z)
+	{
+		if (x < clipMinX || x >= clipMaxX || y < clipMinY || y >= clipMaxY)
+		{
+			return false;
+		}
+		float curPixelDepth = depthBuffer[x + width * y];
+		if (curPixelDepth < z)
+		{
+			depthBuffer[x + width * y] = z;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	
@@ -1165,6 +1232,7 @@ private:
 	int width;
 	int height;
 	UINT *frameBuffer;		//图像缓存
+	float *depthBuffer;		//深度缓存
 	int renderState;
 	UINT background;		//背景颜色
 	UINT foreground;		//线框颜色
