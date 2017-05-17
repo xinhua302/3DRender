@@ -313,10 +313,80 @@ public:
 				t.vertex[1].newPos.x, t.vertex[1].newPos.y, t.vertex[1].uv.y,
 				t.vertex[2].newPos.x, t.vertex[2].newPos.y, t.vertex[2].uv.y,
 				centerX, t.vertex[1].newPos.y);
-			Triangle t1(t.vertex[0].newPos, centerPos, t.vertex[1].newPos, t.vertex[0].uv, {centerU, centerV}, t.vertex[1].uv, t.texBuffer, t.texWidth, t.texWidth, true);
-			Triangle t2(centerPos, t.vertex[1].newPos, t.vertex[2].newPos, { centerU, centerV }, t.vertex[1].uv, t.vertex[2].uv, t.texBuffer, t.texWidth, t.texWidth, true);
+
+			Point2D centerUV = { centerU, centerV };
+
+			Triangle t1(t.vertex[0].newPos, centerPos, t.vertex[1].newPos, t.vertex[0].uv, centerUV, t.vertex[1].uv, t.texBuffer, t.texWidth, t.texWidth, true);
+			Triangle t2(centerPos, t.vertex[1].newPos, t.vertex[2].newPos, centerUV, t.vertex[1].uv, t.vertex[2].uv, t.texBuffer, t.texWidth, t.texWidth, true);
 			FillTopTriangleByTex(t1);
 			FillBottomTriangleByTex(t2);
+		}
+	}
+
+	//透视矫正纹理
+	void DrawTriangleByTexCorrect(const Triangle &triangle)
+	{
+		if (triangle.vertex[0].newPos.y == triangle.vertex[1].newPos.y)
+		{
+			if (triangle.vertex[2].newPos.y > triangle.vertex[1].newPos.y)
+			{
+				FillBottomTriangleByTexCorrect(triangle);
+			}
+			else if (triangle.vertex[2].newPos.y < triangle.vertex[1].newPos.y)
+			{
+				FillTopTriangleByTexCorrect(triangle);
+			}
+		}
+		else if (triangle.vertex[0].newPos.y == triangle.vertex[2].newPos.y)
+		{
+			if (triangle.vertex[1].newPos.y > triangle.vertex[0].newPos.y)
+			{
+				FillBottomTriangleByTexCorrect(triangle);
+			}
+			else if (triangle.vertex[1].newPos.y < triangle.vertex[0].newPos.y)
+			{
+				FillTopTriangleByTexCorrect(triangle);
+			}
+		}
+		else if (triangle.vertex[1].newPos.y == triangle.vertex[2].newPos.y)
+		{
+			if (triangle.vertex[0].newPos.y > triangle.vertex[1].newPos.y)
+			{
+				FillBottomTriangleByTexCorrect(triangle);
+			}
+			else if (triangle.vertex[0].newPos.y < triangle.vertex[1].newPos.y)
+			{
+				FillTopTriangleByTexCorrect(triangle);
+			}
+		}
+		//不是平底也不是平顶,需要拆分
+		else
+		{
+			//从上到下排列顶点
+			Triangle t = triangle;
+			t.SortTopToBottom();
+			Linear2D linear2D(t.vertex[0].newPos.x, t.vertex[0].newPos.y, t.vertex[2].newPos.x, t.vertex[2].newPos.y);
+			float centerX = linear2D.InputYGetX(t.vertex[1].newPos.y);
+			float centerZ = 1 / (GetInterpValue(t.vertex[0].newPos.x, t.vertex[0].newPos.y, 1 / t.vertex[0].newPos.z,
+				t.vertex[1].newPos.x, t.vertex[1].newPos.y, 1 / t.vertex[1].newPos.z,
+				t.vertex[2].newPos.x, t.vertex[2].newPos.y, 1 / t.vertex[2].newPos.z,
+				centerX, t.vertex[1].newPos.y));
+			Point3D centerPos = { centerX, t.vertex[1].newPos.y, centerZ };
+			float centerU = GetInterpValue(t.vertex[0].newPos.x, t.vertex[0].newPos.y, t.vertex[0].uv.x,
+				t.vertex[1].newPos.x, t.vertex[1].newPos.y, t.vertex[1].uv.x,
+				t.vertex[2].newPos.x, t.vertex[2].newPos.y, t.vertex[2].uv.x,
+				centerX, t.vertex[1].newPos.y);
+			float centerV = GetInterpValue(t.vertex[0].newPos.x, t.vertex[0].newPos.y, t.vertex[0].uv.y,
+				t.vertex[1].newPos.x, t.vertex[1].newPos.y, t.vertex[1].uv.y,
+				t.vertex[2].newPos.x, t.vertex[2].newPos.y, t.vertex[2].uv.y,
+				centerX, t.vertex[1].newPos.y);
+
+			Point2D centerUV = { centerU, centerV };
+
+			Triangle t1(t.vertex[0].newPos, centerPos, t.vertex[1].newPos, t.vertex[0].uv, centerUV, t.vertex[1].uv, t.texBuffer, t.texWidth, t.texWidth, true);
+			Triangle t2(centerPos, t.vertex[1].newPos, t.vertex[2].newPos, centerUV, t.vertex[1].uv, t.vertex[2].uv, t.texBuffer, t.texWidth, t.texWidth, true);
+			FillTopTriangleByTexCorrect(t1);
+			FillBottomTriangleByTexCorrect(t2);
 		}
 	}
 
@@ -493,8 +563,12 @@ public:
 
 			for (int i = (int)(xleft); i <= (int)(xRight); i++)
 			{
-				float u = ColorStarU * 256;
-				float v = ColorStarV * 256;
+				float u = ColorStarU * (t.texWidth - 1);
+				float v = ColorStarV * (t.texHeight - 1);
+				if (u < 0 || v < 0 || u >= t.texWidth || v >= t.texHeight)
+				{
+					int haa = 0;
+				}
 				UINT color = t.texBuffer[(UINT)u + (UINT)v * (UINT)t.texWidth];
 				DrawPoint(i, y, color);
 				ColorStarU += dxColorU;
@@ -503,6 +577,95 @@ public:
 			y--;
 			xleft -= leftDxDivDy;
 			xRight -= rightDxDivDy;
+
+			xLeftColorU -= leftDxDivDyColorU;
+			xRightColorU -= rightDxDivDyColorU;
+
+			xLeftColorV -= leftDxDivDyColorV;
+			xRightColorV -= rightDxDivDyColorV;
+		}
+	}
+
+	//透视矫正纹理
+	void FillTopTriangleByTexCorrect(const Triangle &t)
+	{
+		Vertex3D top, left, right;
+		if (t.vertex[0].newPos.y == t.vertex[1].newPos.y)
+		{
+			top = t.vertex[2];
+			left = t.vertex[0];
+			right = t.vertex[1];
+		}
+		else if (t.vertex[1].newPos.y == t.vertex[2].newPos.y)
+		{
+			top = t.vertex[0];
+			left = t.vertex[1];
+			right = t.vertex[2];
+		}
+		else
+		{
+			top = t.vertex[1];
+			left = t.vertex[0];
+			right = t.vertex[2];;
+		}
+		if (left.newPos.x > right.newPos.x)
+		{
+			Swap(left, right);
+		}
+		float leftDxDivDy = (top.newPos.x - left.newPos.x) / ((float)top.newPos.y - (float)left.newPos.y);
+		float rightDxDivDy = ((float)right.newPos.x - (float)top.newPos.x) / ((float)right.newPos.y - (float)top.newPos.y);
+		float xleft = (float)left.newPos.x;
+		float xRight = (float)right.newPos.x;
+		int y = left.newPos.y;
+
+		//1/Z
+		float leftDxDivDyReciprocalZ = ((1 / top.newPos.z) - (1 / left.newPos.z)) / (top.newPos.y - left.newPos.y);
+		float rightDxDivDyReciprocalZ = ((1 / right.newPos.z) - (1 / top.newPos.z)) / (right.newPos.y - top.newPos.y);
+		float xLeftReciprocalZ = 1 / left.newPos.z;
+		float xRightReciprocalZ = 1 / right.newPos.z;
+
+		//U
+		float leftDxDivDyColorU = (top.uv.x / top.newPos.z - left.uv.x / left.newPos.z) / (top.newPos.y - left.newPos.y);
+		float rightDxDivDyColorU = (right.uv.x / right.newPos.z - top.uv.x / top.newPos.z) / (right.newPos.y - top.newPos.y);
+		float xLeftColorU = left.uv.x / left.newPos.z;
+		float xRightColorU = right.uv.x / right.newPos.z;
+		//V
+		float leftDxDivDyColorV = (top.uv.y / top.newPos.z - left.uv.y / left.newPos.z) / (top.newPos.y - left.newPos.y);
+		float rightDxDivDyColorV = (right.uv.y / right.newPos.z - top.uv.y/ top.newPos.z) / (right.newPos.y - top.newPos.y);
+		float xLeftColorV = left.uv.y / left.newPos.z;
+		float xRightColorV = right.uv.y / right.newPos.z;
+
+		while (y >= top.newPos.y)
+		{
+			float dxReciprocalZ = (xRightReciprocalZ - xLeftReciprocalZ) / (xRight - xleft);
+			float reciprocalZ = xLeftReciprocalZ;
+
+			float dxColorU = (xRightColorU - xLeftColorU) / (xRight - xleft);
+			float ColorStarU = xLeftColorU;
+
+			float dxColorV = (xRightColorV - xLeftColorV) / (xRight - xleft);
+			float ColorStarV = xLeftColorV;
+
+			for (int i = (int)(xleft); i <= (int)(xRight); i++)
+			{
+				float u = (ColorStarU / reciprocalZ) * (t.texWidth - 1);
+				float v = (ColorStarV / reciprocalZ) * (t.texHeight - 1);
+				if (u < 0 || v < 0 || u >= t.texWidth || v >= t.texHeight)
+				{
+					int haa = 0;
+				}
+				UINT color = t.texBuffer[(UINT)u + (UINT)v * (UINT)t.texWidth];
+				DrawPoint(i, y, color);
+				ColorStarU += dxColorU;
+				ColorStarV += dxColorV;
+				reciprocalZ += dxReciprocalZ;
+			}
+			y--;
+			xleft -= leftDxDivDy;
+			xRight -= rightDxDivDy;
+
+			xLeftReciprocalZ -= leftDxDivDyReciprocalZ;
+			xRightReciprocalZ -= rightDxDivDyReciprocalZ;
 
 			xLeftColorU -= leftDxDivDyColorU;
 			xRightColorU -= rightDxDivDyColorU;
@@ -687,8 +850,12 @@ public:
 			float ColorStarV = xLeftColorV;
 			for (int i = (int)(xleft); i <= (int)(xRight); i++)
 			{
-				float u = ColorStarU * 256;
-				float v = ColorStarV * 256;
+				float u = ColorStarU * (t.texWidth -1);
+				float v = ColorStarV * (t.texHeight - 1);
+				if (u < 0 || v < 0 || u >= t.texWidth || v >= t.texHeight)
+				{
+					int haa = 0;
+				}
 				UINT color = t.texBuffer[(UINT)u + (UINT)v * (UINT)t.texWidth];
 				DrawPoint(i, y, color);
 				ColorStarU += dxColorU;
@@ -697,6 +864,95 @@ public:
 			y++;
 			xleft += leftDxDivDy;
 			xRight += rightDxDivDy;
+
+			xLeftColorU += leftDxDivDyColorU;
+			xRightColorU += rightDxDivDyColorU;
+
+			xLeftColorV += leftDxDivDyColorV;
+			xRightColorV += rightDxDivDyColorV;
+		}
+	}
+
+	//透视矫正纹理
+	void FillBottomTriangleByTexCorrect(const Triangle &t)
+	{
+		Vertex3D bottom, left, right;
+		if (t.vertex[0].newPos.y == t.vertex[1].newPos.y)
+		{
+			bottom = t.vertex[2];
+			left = t.vertex[0];
+			right = t.vertex[1];
+		}
+		else if (t.vertex[1].newPos.y == t.vertex[2].newPos.y)
+		{
+			bottom = t.vertex[0];
+			left = t.vertex[1];
+			right = t.vertex[2];
+		}
+		else
+		{
+			bottom = t.vertex[1];
+			left = t.vertex[0];
+			right = t.vertex[2];;
+		}
+		if (left.newPos.x > right.newPos.x)
+		{
+			Swap(left, right);
+		}
+		float leftDxDivDy = (bottom.newPos.x - left.newPos.x) / ((float)bottom.newPos.y - (float)left.newPos.y);
+		float rightDxDivDy = ((float)right.newPos.x - (float)bottom.newPos.x) / ((float)right.newPos.y - (float)bottom.newPos.y);
+		float xleft = (float)left.newPos.x;
+		float xRight = (float)right.newPos.x;
+		int y = left.newPos.y;
+
+		//1/Z
+		float leftDxDivDyReciprocalZ = ((1 / bottom.newPos.z) - (1 / left.newPos.z)) / (bottom.newPos.y - left.newPos.y);
+		float rightDxDivDyReciprocalZ = ((1 / right.newPos.z) - (1 / bottom.newPos.z)) / (right.newPos.y - bottom.newPos.y);
+		float xLeftReciprocalZ = 1 / left.newPos.z;
+		float xRightReciprocalZ = 1 / right.newPos.z;
+
+		//U
+		float leftDxDivDyColorU = (bottom.uv.x / bottom.newPos.z - left.uv.x / left.newPos.z) / (bottom.newPos.y - left.newPos.y);
+		float rightDxDivDyColorU = (right.uv.x / right.newPos.z - bottom.uv.x / bottom.newPos.z) / (right.newPos.y - bottom.newPos.y);
+		float xLeftColorU = left.uv.x / left.newPos.z;
+		float xRightColorU = right.uv.x / right.newPos.z;
+		//V
+		float leftDxDivDyColorV = (bottom.uv.y / bottom.newPos.z - left.uv.y / left.newPos.z) / (bottom.newPos.y - left.newPos.y);
+		float rightDxDivDyColorV = (right.uv.y / right.newPos.z - bottom.uv.y / bottom.newPos.z) / (right.newPos.y - bottom.newPos.y);
+		float xLeftColorV = left.uv.y / left.newPos.z;
+		float xRightColorV = right.uv.y / right.newPos.z;
+
+
+		while (y <= bottom.newPos.y)
+		{
+			float dxReciprocalZ = (xRightReciprocalZ - xLeftReciprocalZ) / (xRight - xleft);
+			float reciprocalZ = xLeftReciprocalZ;
+
+			float dxColorU = (xRightColorU - xLeftColorU) / (xRight - xleft);
+			float ColorStarU = xLeftColorU;
+
+			float dxColorV = (xRightColorV - xLeftColorV) / (xRight - xleft);
+			float ColorStarV = xLeftColorV;
+			for (int i = (int)(xleft); i <= (int)(xRight); i++)
+			{
+				float u = (ColorStarU / reciprocalZ) * (t.texWidth - 1);
+				float v = (ColorStarV / reciprocalZ) * (t.texHeight - 1);
+				if (u < 0 || v < 0 || u >= t.texWidth || v >= t.texHeight)
+				{
+					int haa = 0;
+				}
+				UINT color = t.texBuffer[(UINT)u + (UINT)v * (UINT)t.texWidth];
+				DrawPoint(i, y, color);
+				ColorStarU += dxColorU;
+				ColorStarV += dxColorV;
+				reciprocalZ += dxReciprocalZ;
+			}
+			y++;
+			xleft += leftDxDivDy;
+			xRight += rightDxDivDy;
+
+			xLeftReciprocalZ += leftDxDivDyReciprocalZ;
+			xRightReciprocalZ += rightDxDivDyReciprocalZ;
 
 			xLeftColorU += leftDxDivDyColorU;
 			xRightColorU += rightDxDivDyColorU;
@@ -748,7 +1004,8 @@ public:
 					if (objecetList[i]->triangleList[j].state == TRIANGLE_BACKFACE)
 						continue;
 
-					DrawTriangleByTex(objecetList[i]->triangleList[j]);
+					DrawTriangleByTexCorrect(objecetList[i]->triangleList[j]);
+					//DrawTriangle(objecetList[i]->triangleList[j], 0x00FF0000);
 				}
 			}
 			

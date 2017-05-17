@@ -12,8 +12,8 @@ const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 const int BITS = 32;				//每个像素的位数  
 const int MAX_LOADSTRING = 100;
-const int TEXTURE_WIDTH = 256;
-const int TEXTURE_HEIGHT = 256;
+const int TEXTURE_WIDTH = 148;
+const int TEXTURE_HEIGHT = 149;
 
 // 全局变量: 
 HINSTANCE hInst;								// 当前实例
@@ -292,11 +292,11 @@ void RenderInit()
 	//获取纹理的像素
 	GetDIBits(screen_hdc, hTextureBitmap, 0, TEXTURE_HEIGHT, TextureBuffer, (BITMAPINFO*)&binfoTex, DIB_RGB_COLORS);
 
-	Point3D objectPosition = { 1.8f, 0.5f, 4, 1 };
+	Point3D objectPosition = { 1.9f, 0.5f, 4, 1 };
 
-	Point3D camerPos = { 0.0, 0.0f, 0, 1 };
+	Point3D camerPos = { -0.5, 2.0f, 0, 1 };
 	Vector3D v = { 0, 1, 0.0, 0 };
-	camera = new UVNCamera(camerPos, { 0, 0, 1 }, v, 2, 4, 90, 1, SCREEN_WIDTH * 1.0f / SCREEN_HEIGHT);
+	camera = new UVNCamera(camerPos, objectPosition, v, 2, 4, 90, 1, SCREEN_WIDTH * 1.0f / SCREEN_HEIGHT);
 
 	device = new Device(camera, SCREEN_WIDTH, SCREEN_HEIGHT, Buffer, RENDER_STATE_WIREFRAME, 0xFFFFFFFF, 0xFFFF0000);
 

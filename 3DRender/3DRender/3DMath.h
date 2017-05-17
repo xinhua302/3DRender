@@ -35,7 +35,7 @@ struct Vector3D
 //2DÏòÁ¿
 struct Vector2D
 {
-	int x, y;
+	float x, y;
 
 	bool operator<(const Vector2D & v) 
 	{
@@ -362,4 +362,5 @@ float GetInterpValue(float x0, float y0, float value0,
 	float value = value0 * Sp12 / total + value1 * Sp02 / total + value2 * Sp01 / total;
 	return value;
 }
+
 #endif
