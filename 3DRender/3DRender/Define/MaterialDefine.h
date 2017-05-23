@@ -7,7 +7,7 @@ struct Material
 	int id;
 	int state;
 	int attr;
-	char *name;
+	char name[64];
 	double ka;			//环境光反射系数
 	double kd;			//漫反射光反射系数
 	double ks;			//镜面光反射系数
@@ -15,5 +15,12 @@ struct Material
 	UINT *texBuffer;	//纹理图
 	double width;
 	double height;
+
+	Material(UINT *tex, double width, double height)
+	{
+		this->texBuffer = tex;
+		this->width = width;
+		this->height = height;
+	}
 };
 #endif

@@ -9,10 +9,34 @@ const int TRIANGLE_FOREFACE = 0;
 const int TRIANGLE_BACKFACE = 1;
 const int TRIANGLE_CLIPPED = 2;
 
-struct VertexInfo
+struct FinalTriange
 {
 	Point3D vertex[3];
 	Point2D uv[3];
+	Color color[3];
+	Material *material;		//²ÄÖÊ
+
+	FinalTriange()
+	{
+
+	}
+
+	FinalTriange(Point3D p0, Point3D p1, Point3D p2, Point2D uv0, Point2D uv1, Point2D uv2, Color c0, Color c1, Color c2, Material *m)
+	{
+		vertex[0] = p0;
+		vertex[1] = p1;
+		vertex[2] = p2;
+
+		uv[0] = uv0;
+		uv[1] = uv1;
+		uv[2] = uv2;
+
+		color[0] = c0;
+		color[1] = c1;
+		color[2] = c2;
+
+		material = m;
+	}
 
 	void TopToBottomSort()
 	{
@@ -22,7 +46,7 @@ struct VertexInfo
 			int index = i;
 			for (int j = index; j < count; j++)
 			{
-				if (vertex[j] < vertex[index])
+				if (vertex[j].y < vertex[index].y)
 				{
 					continue;
 				}

@@ -10,7 +10,6 @@
 const int RENDER_STATE_WIREFRAME = 1;	// 渲染线框
 const int RENDER_STATE_COLOR = 2;		// 渲染颜色
 const int RENDER_STATE_TEXTURE = 4;		// 渲染纹理
-
 class Device
 {
 public:
@@ -24,11 +23,13 @@ public:
 		Projection();
 		ViewTransform();
 		RenderObject();
+		RenderFinalTirangleList();
 		/*Triangle t({200, 400, 200}, { 400, 400, 200 }, { 300, 100, 200 }, 0x00FF0000, 0x0000FF00, 0x000000FF, true);
 		DrawTriangle(t);*/
 	}
 	void Clear()
 	{
+		finalTriangleCount = 0;
 		memset(frameBuffer, 99, sizeof(UINT)* width * height);
 		memset(depthBuffer, 0, sizeof(double)* width * height);
 	}
@@ -51,7 +52,7 @@ public:
 	}
 	//画点
 	void DrawPoint(int x, int y, UINT color)
-	{
+	{	
 		if (x < clipMinX || x >= clipMaxX || y < clipMinY || y >= clipMaxY)
 		{
 			return;
@@ -197,6 +198,30 @@ public:
 		DrawTriangle(p1, p2, p3, color, mode);
 	}
 
+	//void RemoveBackfaceTriangle()
+	//{
+	//	for (int i = 0; i < objectListCount; i++)
+	//	{
+	//		for (int j = 0; j < objecetList[i]->triangleCount; j++)
+	//		{
+	//			Vector3D v1 = objecetList[i]->triangleList[j].vi.vertex[1] - objecetList[i]->triangleList[j].vi.vertex[0];
+	//			Vector3D v2 = objecetList[i]->triangleList[j].vi.vertex[2] - objecetList[i]->triangleList[j].vi.vertex[1];
+	//			//法线
+	//			Vector3D normal;
+	//			VectorCross(normal, v1, v2);
+
+	//			Vector3D direction = objecetList[i]->triangleList[j].vi.vertex[0] - camera->GetPosition();
+
+	//			float dot = VectorDot(direction, normal);
+
+	//			if (dot <= 0.0f)
+	//			{
+	//				objecetList[i]->triangleList[j].State = TRIANGLE_BACKFACE;
+	//			}
+	//		}
+	//	}
+	//}
+
 
 	//透视矫正纹理
 	void FillBottomTriangleByTexCorrect(const Triangle &t)
@@ -329,7 +354,7 @@ public:
 					//	continue;
 					objecetList[i]->triangleList[j].vertexList = objecetList[i]->transVertexList;
 
-					DrawTriangle(objecetList[i]->triangleList[j], foreground, RENDER_STATE_WIREFRAME);
+					//DrawTriangle(objecetList[i]->triangleList[j], foreground, RENDER_STATE_WIREFRAME);
 				}
 			}
 			/*else if (objecetList[i]->state == RENDER_STATE_COLOR)
@@ -357,10 +382,253 @@ public:
 		}
 	}
 
+	void RenderFinalTirangleList()
+	{
+		for (int i = 0; i < objectListCount; i++)
+		{
+			for (int j = 0; j < objecetList[i]->triangleCount; j++)
+			{
+				FinalTriange &t = finalTriangleList[finalTriangleCount++];
+				t.material = objecetList[i]->triangleList[j].material;
+				for (int k = 0; k < 3; k++)
+				{
+					t.vertex[k].x = objecetList[i]->triangleList[j].GetVertex(k).vertex.x;
+					t.vertex[k].y = objecetList[i]->triangleList[j].GetVertex(k).vertex.y;
+					t.vertex[k].z = objecetList[i]->triangleList[j].GetVertex(k).vertex.z;
+					t.uv[k].x = objecetList[i]->triangleList[j].uv[k].x;
+					t.uv[k].y = objecetList[i]->triangleList[j].uv[k].y;
+					t.color[k] = objecetList[i]->triangleList[j].GetVertex(k).color;
+				}
+			}
+		}
+		for (int i = 0; i < finalTriangleCount; i++)
+		{
+			Point2D p1 = { finalTriangleList[i].vertex[0].x, finalTriangleList[i].vertex[0].y };
+			Point2D p2 = { finalTriangleList[i].vertex[1].x, finalTriangleList[i].vertex[1].y };
+			Point2D p3 = { finalTriangleList[i].vertex[2].x, finalTriangleList[i].vertex[2].y };
+			DrawTriangle(p1, p2, p3, 0x0000FFFF, RENDER_STATE_WIREFRAME);
+		}
+		
+
+		for (int i = 0; i < finalTriangleCount; i++)
+		{
+			/*if (i < 6)
+			{
+				continue;
+			}*/
+			DrawTriangle(finalTriangleList[i]);
+		}
+	}
+
+	void DrawTriangle(FinalTriange &t)
+	{
+		//是否是平底或平顶三角形
+		if (abs(t.vertex[0].y - t.vertex[1].y) <0.000001)
+		{
+			if (t.vertex[2].y >t.vertex[1].y)
+			{
+				BottomTriangle(t);
+			}
+			else if (t.vertex[2].y < t.vertex[1].y)
+			{
+				TopTriangle(t);
+			}
+		}
+		else if (abs(t.vertex[0].y - t.vertex[2].y) < 0.000001)
+		{
+			if (t.vertex[1].y > t.vertex[0].y )
+			{
+				BottomTriangle(t);
+			}
+			else if (t.vertex[1].y < t.vertex[0].y )
+			{
+				TopTriangle(t);
+			}
+		}
+		else if (abs(t.vertex[1].y - t.vertex[2].y) < 0.000001)
+		{
+			if (t.vertex[0].y > t.vertex[1].y)
+			{
+				BottomTriangle(t);
+			}
+			else if (t.vertex[0].y < t.vertex[1].y)
+			{
+				TopTriangle(t);
+			}
+		}
+		//不是平底也不是平顶,需要拆分
+		else
+		{
+			//从上到下排列顶点
+			t.TopToBottomSort();
+			//(y - b) / k
+			double k = (t.vertex[0].y - t.vertex[2].y) * 1.0f / (t.vertex[0].x - t.vertex[2].x);
+			double m = t.vertex[2].y - k*t.vertex[2].x;
+			double CenterPointX = (t.vertex[1].y - m) / k;
+
+			if ((t.vertex[0].x - t.vertex[2].x) == 0)
+			{
+				CenterPointX = t.vertex[1].x;
+			}
+
+			double reciprocalZ = GetInterpValue(t.vertex[0].x, t.vertex[0].y, 1 / t.vertex[0].z,
+				t.vertex[1].x, t.vertex[1].y, 1 / t.vertex[1].z,
+				t.vertex[2].x, t.vertex[2].y, 1 / t.vertex[2].z,
+				CenterPointX, t.vertex[1].y);
+
+			double r = GetInterpValue(t.vertex[0].x, t.vertex[0].y, t.color[0].r,
+				t.vertex[1].x, t.vertex[1].y, t.color[1].r,
+				t.vertex[2].x, t.vertex[2].y, t.color[2].r,
+				CenterPointX, t.vertex[1].y);
+
+			double g = GetInterpValue(t.vertex[0].x, t.vertex[0].y, t.color[0].g,
+				t.vertex[1].x, t.vertex[1].y, t.color[1].g,
+				t.vertex[2].x, t.vertex[2].y, t.color[2].g,
+				CenterPointX, t.vertex[1].y);
+
+			double b = GetInterpValue(t.vertex[0].x, t.vertex[0].y, t.color[0].b,
+				t.vertex[1].x, t.vertex[1].y, t.color[1].b,
+				t.vertex[2].x, t.vertex[2].y, t.color[2].b,
+				CenterPointX, t.vertex[1].y);
+
+			double u = GetInterpValue(t.vertex[0].x, t.vertex[0].y, t.uv[0].x,
+				t.vertex[1].x, t.vertex[1].y, t.uv[1].x,
+				t.vertex[2].x, t.vertex[2].y, t.uv[2].x,
+				CenterPointX, t.vertex[1].y);
+
+			double v = GetInterpValue(t.vertex[0].x, t.vertex[0].y, t.uv[0].y,
+				t.vertex[1].x, t.vertex[1].y, t.uv[1].y,
+				t.vertex[2].x, t.vertex[2].y, t.uv[2].y,
+				CenterPointX, t.vertex[1].y);
+			
+
+			Point3D centerPoint = { CenterPointX, t.vertex[1].y, 1 / reciprocalZ };
+
+			FinalTriange bottom(t.vertex[0], centerPoint, t.vertex[1], t.uv[0], { u, v }, t.uv[1], t.color[0], Color(r, g, b), t.color[1], t.material);
+			FinalTriange top(centerPoint, t.vertex[1], t.vertex[2], { u, v }, t.uv[1], t.uv[2], Color(r, g, b), t.color[1], t.color[2], t.material);
+
+			TopTriangle(top);
+			BottomTriangle(bottom);
+		}
+	}
+
+	void BottomTriangle(const FinalTriange &t)
+	{
+		Vertex3D bottom, left, right;
+		Vector2D bottomUV, leftUV, rightUV;
+		if (t.vertex[0].y == t.vertex[1].y)
+		{
+			bottom.vertex = t.vertex[2];
+			bottomUV = t.uv[2];
+			left.vertex = t.vertex[0];
+			leftUV = t.uv[0];
+			right.vertex = t.vertex[1];
+			rightUV = t.uv[1];
+		}
+		else if (t.vertex[1].y == t.vertex[2].y)
+		{
+			bottom.vertex = t.vertex[0];
+			left.vertex = t.vertex[1];
+			right.vertex = t.vertex[2];
+			bottomUV = t.uv[0];
+			leftUV = t.uv[1];
+			rightUV = t.uv[2];
+		}
+		else
+		{
+			bottom.vertex = t.vertex[1];
+			left.vertex = t.vertex[0];
+			right.vertex = t.vertex[2];
+			bottomUV = t.uv[1];
+			leftUV = t.uv[0];
+			rightUV = t.uv[2];
+		}
+		if (left.vertex.x > right.vertex.x)
+		{
+			Swap(left, right);
+			Swap(leftUV, rightUV);
+		}
+		double leftDxDivDy = (bottom.vertex.x - left.vertex.x) / (bottom.vertex.y - left.vertex.y);
+		double rightDxDivDy = (right.vertex.x - bottom.vertex.x) / (right.vertex.y - bottom.vertex.y);
+		double xleft = left.vertex.x;
+		double xRight = right.vertex.x;
+		int y = left.vertex.y;
+
+		//1/Z
+		double leftDxDivDyReciprocalZ = ((1 / bottom.vertex.z) - (1 / left.vertex.z)) / (bottom.vertex.y - left.vertex.y);
+		double rightDxDivDyReciprocalZ = ((1 / right.vertex.z) - (1 / bottom.vertex.z)) / (right.vertex.y - bottom.vertex.y);
+		double xLeftReciprocalZ = 1 / left.vertex.z;
+		double xRightReciprocalZ = 1 / right.vertex.z;
+
+		//U
+		double leftDxDivDyColorU = (bottomUV.x / bottom.vertex.z - leftUV.x / left.vertex.z) / (bottom.vertex.y - left.vertex.y);
+		double rightDxDivDyColorU = (rightUV.x / right.vertex.z - bottomUV.x / bottom.vertex.z) / (right.vertex.y - bottom.vertex.y);
+		double xLeftColorU = leftUV.x / left.vertex.z;
+		double xRightColorU = rightUV.x / right.vertex.z;
+		//V
+		double leftDxDivDyColorV = (bottomUV.y / bottom.vertex.z - leftUV.y / left.vertex.z) / (bottom.vertex.y - left.vertex.y);
+		double rightDxDivDyColorV = (rightUV.y / right.vertex.z - bottomUV.y / bottom.vertex.z) / (right.vertex.y - bottom.vertex.y);
+		double xLeftColorV = leftUV.y / left.vertex.z;
+		double xRightColorV = rightUV.y / right.vertex.z;
+
+		double texWidth = t.material->width;
+		double texHeight = t.material->height;
+		UINT *texBuffer = t.material->texBuffer;
+
+		while (y < bottom.vertex.y)
+		{
+			double dxReciprocalZ = (xRightReciprocalZ - xLeftReciprocalZ) / (xRight - xleft);
+			double reciprocalZ = xLeftReciprocalZ;
+
+			double dxColorU = (xRightColorU - xLeftColorU) / (xRight - xleft);
+			double ColorStarU = xLeftColorU;
+
+			double dxColorV = (xRightColorV - xLeftColorV) / (xRight - xleft);
+			double ColorStarV = xLeftColorV;
+			for (int i = (int)(xleft); i < (int)(xRight); i++)
+			{
+
+				double u = (ColorStarU / reciprocalZ) * (texWidth - 1);
+				double v = (ColorStarV / reciprocalZ) * (texHeight - 1);
+				if (u < 0 || v < 0 || u >= texWidth || v >= texHeight)
+				{
+					int haa = 0;
+				}
+				if (TestZ(i, y, reciprocalZ))
+				{
+					UINT color = texBuffer[(UINT)u + (UINT)v * (UINT)texWidth];
+					DrawPoint(i, y, color);
+				}
+
+				ColorStarU += dxColorU;
+				ColorStarV += dxColorV;
+				reciprocalZ += dxReciprocalZ;
+			}
+			y++;
+			xleft += leftDxDivDy;
+			xRight += rightDxDivDy;
+
+			xLeftReciprocalZ += leftDxDivDyReciprocalZ;
+			xRightReciprocalZ += rightDxDivDyReciprocalZ;
+
+			xLeftColorU += leftDxDivDyColorU;
+			xRightColorU += rightDxDivDyColorU;
+
+			xLeftColorV += leftDxDivDyColorV;
+			xRightColorV += rightDxDivDyColorV;
+		}
+	}
+
+	void TopTriangle(const FinalTriange &triangle)
+	{
+
+	}
+
 	//清空渲染列表
 	void ClearObjectList()
 	{
 		objectListCount = 0;
+		finalTriangleCount = 0;
 	}
 
 	//相机变换ss
@@ -487,6 +755,7 @@ private:
 		this->clipMaxX = width;	
 		this->clipMaxY = height;
 		objectListCount = 0;
+		finalTriangleCount = 0;
 	}
 	void Destroy()
 	{
@@ -668,6 +937,9 @@ private:
 
 	int objectListCount;
 	GameObject *objecetList[64];			//渲染物体列表
+
+	int finalTriangleCount;
+	FinalTriange finalTriangleList[64];
 };
 
 

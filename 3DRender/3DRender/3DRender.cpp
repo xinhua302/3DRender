@@ -75,6 +75,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 			DispatchMessage(&msg);
 		}
 		RenderMain();
+		Sleep(33);
 
 	}
 	RenderEnd();
@@ -449,8 +450,11 @@ void RenderInit()
 	hTextureBitmap = (HBITMAP)LoadImage(hInst, L"102.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 	//获取纹理的像素
 	GetDIBits(screen_hdc, hTextureBitmap, 0, TEXTURE_HEIGHT, TextureBuffer, (BITMAPINFO*)&binfoTex, DIB_RGB_COLORS);
-
-
+	Material *m = new Material(TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+	for (int i = 0; i < 12; i++)
+	{
+		triangleList[i].material = m;
+	}
 
 	Point3D camerPos = {0.0, 0.0f, 0, 1 };
 	Vector3D v = { 0, 1, 0.0, 0 };
