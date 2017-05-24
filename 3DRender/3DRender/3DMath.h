@@ -6,6 +6,7 @@
 #include <cmath>
 
 typedef unsigned char UCHAR;
+typedef unsigned int UINT;
 
 const double PI = 3.1415926;
 
@@ -13,13 +14,13 @@ typedef unsigned int UINT32;
 //4X4矩阵
 struct Matrix4X4
 {
-	float m[4][4];
+	double m[4][4];
 };
 
 //3D向量
 struct Vector3D
 {
-	float x, y, z, w;
+	double x, y, z, w;
 
 	Vector3D operator-(const Vector3D & v)
 	{
@@ -41,7 +42,7 @@ struct Vector3D
 		return Vector3D{ this->x + v.x, this->y + v.y, this->z + v.z, 0 };
 	}
 
-	Vector3D operator/(float x)
+	Vector3D operator/(double x)
 	{
 		return Vector3D{ this->x / x, this->y / x, this->z / x, 0 };
 	}
@@ -50,7 +51,7 @@ struct Vector3D
 //2D向量
 struct Vector2D
 {
-	float x, y;
+	double x, y;
 
 	bool operator<(const Vector2D & v) 
 	{
@@ -108,15 +109,15 @@ int MakeValueInRange(int value, int min, int max)
 }
 
 //计算插值 t[0, 1]
-float Interp(float value1, float value2, float t)
+double Interp(double value1, double value2, double t)
 {
 	return value1 + (value2 - value1) * t;
 }
 
 //计算向量长度
-float CalculateVector3DLength(const Vector3D &v)
+double CalculateVector3DLength(const Vector3D &v)
 {
-	float sq = v.x * v.x + v.y * v.y + v.z * v.z;
+	double sq = v.x * v.x + v.y * v.y + v.z * v.z;
 	return sqrt(sq);
 }
 
@@ -139,7 +140,7 @@ void VectorSub(Vector3D &destV, const Vector3D &x, const Vector3D &y)
 }
 
 //向量点乘
-float VectorDot(const Vector3D &x, const Vector3D &y)
+double VectorDot(const Vector3D &x, const Vector3D &y)
 {
 	return x.x * y.x + x.y * y.y + x.z * y.z;
 }
@@ -154,7 +155,7 @@ void VectorCross(Vector3D &destV, const Vector3D &x, const Vector3D &y)
 }
 
 //向量插值
-void VectorInterp(Vector3D &destV, const Vector3D &x, const Vector3D &y, float t)
+void VectorInterp(Vector3D &destV, const Vector3D &x, const Vector3D &y, double t)
 {
 	destV.x = Interp(x.x, y.x, t);
 	destV.y = Interp(x.y, y.y, t);
@@ -165,7 +166,7 @@ void VectorInterp(Vector3D &destV, const Vector3D &x, const Vector3D &y, float t
 //向量归一化
 void VectorNormalize(Vector3D &v)
 {
-	float length = CalculateVector3DLength(v);
+	double length = CalculateVector3DLength(v);
 	if (length != 0.0f)
 	{
 		v.x /= length;
@@ -216,7 +217,7 @@ void MatrixMul(Matrix4X4 &destM, const Matrix4X4 &m1, const Matrix4X4 &m2)
 //向量和矩阵相乘
 void MatrixApply(Vector3D &destV, const Vector3D v, const Matrix4X4 &m)
 {
-	float X = v.x, Y = v.y, Z = v.z, W = v.w;
+	double X = v.x, Y = v.y, Z = v.z, W = v.w;
 	destV.x = X * m.m[0][0] + Y * m.m[1][0] + Z * m.m[2][0] + W * m.m[3][0];
 	destV.y = X * m.m[0][1] + Y * m.m[1][1] + Z * m.m[2][1] + W * m.m[3][1];
 	destV.z = X * m.m[0][2] + Y * m.m[1][2] + Z * m.m[2][2] + W * m.m[3][2];
@@ -224,7 +225,7 @@ void MatrixApply(Vector3D &destV, const Vector3D v, const Matrix4X4 &m)
 }
 
 //矩阵缩放
-void MatrixScale(Matrix4X4 &destM, const Matrix4X4 &m, float scale)
+void MatrixScale(Matrix4X4 &destM, const Matrix4X4 &m, double scale)
 {
 	for (int i = 0; i < 4; i++)
 	{
@@ -267,7 +268,7 @@ void MatrixZero(Matrix4X4 &destM)
 }
 
 //平移变换
-void MatrixTranslate(Matrix4X4 &m, float x, float y, float z)
+void MatrixTranslate(Matrix4X4 &m, double x, double y, double z)
 {
 	MatrixIdentity(m);
 	m.m[3][0] = x;
@@ -276,7 +277,7 @@ void MatrixTranslate(Matrix4X4 &m, float x, float y, float z)
 }
 
 //缩放变换
-void MatrixScale(Matrix4X4 &m, float x, float y, float z)
+void MatrixScale(Matrix4X4 &m, double x, double y, double z)
 {
 	MatrixIdentity(m);
 	m.m[0][0] = x;
@@ -285,12 +286,12 @@ void MatrixScale(Matrix4X4 &m, float x, float y, float z)
 }
 
 //矩阵旋转
-void MatrixRotate(Matrix4X4 &m, float x, float y, float z, float theta)
+void MatrixRotate(Matrix4X4 &m, double x, double y, double z, double theta)
 {
-	float qsin = (float)sin(theta * 0.5f);
-	float qcos = (float)cos(theta * 0.5f);
+	double qsin = (double)sin(theta * 0.5f);
+	double qcos = (double)cos(theta * 0.5f);
 	Vector3D vec = { x, y, z, 1.0f };
-	float w = qcos;
+	double w = qcos;
 	VectorNormalize(vec);
 	x = vec.x * qsin;
 	y = vec.y * qsin;
@@ -315,7 +316,7 @@ struct Transform
 	Matrix4X4 view;
 	Matrix4X4 projection;
 	Matrix4X4 transform;	//transform = world * view * projection
-	float w, h;				//屏幕大小
+	double w, h;				//屏幕大小
 };
 
 //更新矩阵
@@ -328,9 +329,9 @@ void TransformUpdate(Transform &ts)
 
 struct Linear2D
 {
-	float x0, y0, x1, y1;
+	double x0, y0, x1, y1;
 
-	Linear2D(float x0, float y0, float x1, float y1) 
+	Linear2D(double x0, double y0, double x1, double y1) 
 	{
 		this->x0 = x0;
 		this->y0 = y0;
@@ -339,22 +340,22 @@ struct Linear2D
 	}
 
 	//f01（x，y）=（y0-y1）*x+（x1-x0）*y+x0*y1-x1*y0
-	float InputXGetY(float x)
+	double InputXGetY(double x)
 	{
 		return -((y0 - y1)*x + x0*y1 - x1*y0) / (x1 - x0);
 	}
 
-	float InputYGetX(float y)
+	double InputYGetX(double y)
 	{
 		return -((x1 - x0)*y + x0*y1 - x1*y0) / (y0 - y1);
 	}
 };
 
 //输入三角形的三个点，输出插值
-float GetInterpValue(float x0, float y0, float value0, 
-	float x1, float y1, float value1, 
-	float x2, float y2, float value2, 
-	float x, float y)
+double GetInterpValue(double x0, double y0, double value0, 
+	double x1, double y1, double value1, 
+	double x2, double y2, double value2, 
+	double x, double y)
 {
 	Vector3D p1 = { x1 - x, y1 - y, 0 };
 	Vector3D p2 = { x2 - x, y2 - y, 0 };
@@ -362,19 +363,19 @@ float GetInterpValue(float x0, float y0, float value0,
 
 	Vector3D p12;
 	VectorCross(p12, p1, p2);
-	float Sp12 = CalculateVector3DLength(p12);
+	double Sp12 = CalculateVector3DLength(p12);
 
 	Vector3D p02;
 	VectorCross(p02, p0, p2);
-	float Sp02 = CalculateVector3DLength(p02);
+	double Sp02 = CalculateVector3DLength(p02);
 
 	Vector3D p01;
 	VectorCross(p01, p0, p1);
-	float Sp01 = CalculateVector3DLength(p01);
+	double Sp01 = CalculateVector3DLength(p01);
 
-	float total = Sp12 + Sp02 + Sp01;
+	double total = Sp12 + Sp02 + Sp01;
 
-	float value = value0 * Sp12 / total + value1 * Sp02 / total + value2 * Sp01 / total;
+	double value = value0 * Sp12 / total + value1 * Sp02 / total + value2 * Sp01 / total;
 	return value;
 }
 

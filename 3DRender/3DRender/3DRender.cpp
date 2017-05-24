@@ -5,6 +5,7 @@
 #include "3DRender.h"
 #include "Device.h"
 #include "Camera.h"
+#include "Define/GeometryDefine.h"
 
 
 //屏幕宽度和高度   
@@ -216,72 +217,74 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*----------------------------------------Render------------------------------------------*/
+///*----------------------------------------Render------------------------------------------*/
 //视频缓存
 UINT Buffer[SCREEN_WIDTH*SCREEN_HEIGHT];
 //渲染装置
 Device *device;
 //相机
 UVNCamera *camera;
-//测试用的正方体
-Objecet *object1;
-Objecet *object2;
-//8个坐标
-Point3D mesh[8] = {
-	{ 1, -1, 1, 1 },
-	{ -1, -1, 1, 1 },
-	{ -1, 1, 1, 1 },
-	{ 1, 1, 1, 1 },
-	{ 1, -1, -1, 1 },
-	{ -1, -1, -1, 1 },
-	{ -1, 1, -1, 1 },
-	{ 1, 1, -1, 1 },
-};
 
-UINT color[8] = { 0x00FF0000, 0x0000FF00, 0x000000FF, 0x00FF0000, 0x0000FF00, 0x000000FF, 0x00FF0000, 0x0000FF00 };
-//12个三角形
-Triangle T1(mesh[0], mesh[1], mesh[2], color[0], color[1], color[2]);
-Triangle T2(mesh[2], mesh[3], mesh[1], color[2], color[3], color[1]);
+GameObject *object0;
+////测试用的正方体
+//Objecet *object1;
+//Objecet *object2;
+////8个坐标
+//Point3D mesh[8] = {
+//	{ 1, -1, 1, 1 },
+//	{ -1, -1, 1, 1 },
+//	{ -1, 1, 1, 1 },
+//	{ 1, 1, 1, 1 },
+//	{ 1, -1, -1, 1 },
+//	{ -1, -1, -1, 1 },
+//	{ -1, 1, -1, 1 },
+//	{ 1, 1, -1, 1 },
+//};
 
-Triangle T3(mesh[6], mesh[5], mesh[4], color[6], color[5], color[4]);
-Triangle T4(mesh[4], mesh[7], mesh[6], color[4], color[7], color[6]);
-
-Triangle T5(mesh[7], mesh[4], mesh[0], color[7], color[4], color[0]);
-Triangle T6(mesh[0], mesh[3], mesh[7], color[0], color[3], color[7]);
-
-Triangle T7(mesh[1], mesh[5], mesh[6], color[1], color[5], color[6]);
-Triangle T8(mesh[6], mesh[2], mesh[1], color[6], color[2], color[1]);
-
-Triangle T9(mesh[5], mesh[1], mesh[0], color[5], color[1], color[0]);
-Triangle T10(mesh[0], mesh[4], mesh[5], color[0], color[4], color[5]);
-
-Triangle T11(mesh[3], mesh[2], mesh[6], color[3], color[2], color[6]);
-Triangle T12(mesh[6], mesh[7], mesh[3], color[6], color[7], color[3]);
-Triangle list2[12] = { T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12 };
-
-Point2D p0 = { 0.0f, 0.0f };
-Point2D p1 = { 1.0f, 0.0f };
-Point2D p2 = { 1.0f, 1.0f };
-Point2D p3 = { 0.0f, 1.0f };
-Triangle t1(mesh[0], mesh[1], mesh[2], p3, p0, p1, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
-Triangle t2(mesh[2], mesh[3], mesh[1], p1, p2, p3, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
-
-Triangle t3(mesh[6], mesh[5], mesh[4], p3, p0, p1, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
-Triangle t4(mesh[4], mesh[7], mesh[6], p1, p2, p3, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
-
-Triangle t5(mesh[7], mesh[4], mesh[0], p3, p0, p1, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
-Triangle t6(mesh[0], mesh[3], mesh[7], p1, p2, p3, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
-
-Triangle t7(mesh[1], mesh[5], mesh[6], p3, p0, p1, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
-Triangle t8(mesh[6], mesh[2], mesh[1], p1, p2, p3, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
-
-Triangle t9(mesh[5], mesh[1], mesh[0], p3, p0, p1, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
-Triangle t10(mesh[0], mesh[4], mesh[5], p1, p2, p3, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
-
-Triangle t11(mesh[3], mesh[2], mesh[6], p3, p0, p1, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
-Triangle t12(mesh[6], mesh[7], mesh[3], p1, p2, p3, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
-//三角形列表
-Triangle list1[12] = { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12 };
+//UINT color[8] = { 0x00FF0000, 0x0000FF00, 0x000000FF, 0x00FF0000, 0x0000FF00, 0x000000FF, 0x00FF0000, 0x0000FF00 };
+////12个三角形
+//Triangle T1(mesh[0], mesh[1], mesh[2], color[0], color[1], color[2]);
+//Triangle T2(mesh[2], mesh[3], mesh[1], color[2], color[3], color[1]);
+//
+//Triangle T3(mesh[6], mesh[5], mesh[4], color[6], color[5], color[4]);
+//Triangle T4(mesh[4], mesh[7], mesh[6], color[4], color[7], color[6]);
+//
+//Triangle T5(mesh[7], mesh[4], mesh[0], color[7], color[4], color[0]);
+//Triangle T6(mesh[0], mesh[3], mesh[7], color[0], color[3], color[7]);
+//
+//Triangle T7(mesh[1], mesh[5], mesh[6], color[1], color[5], color[6]);
+//Triangle T8(mesh[6], mesh[2], mesh[1], color[6], color[2], color[1]);
+//
+//Triangle T9(mesh[5], mesh[1], mesh[0], color[5], color[1], color[0]);
+//Triangle T10(mesh[0], mesh[4], mesh[5], color[0], color[4], color[5]);
+//
+//Triangle T11(mesh[3], mesh[2], mesh[6], color[3], color[2], color[6]);
+//Triangle T12(mesh[6], mesh[7], mesh[3], color[6], color[7], color[3]);
+//Triangle list2[12] = { T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12 };
+//
+//Point2D p0 = { 0.0f, 0.0f };
+//Point2D p1 = { 1.0f, 0.0f };
+//Point2D p2 = { 1.0f, 1.0f };
+//Point2D p3 = { 0.0f, 1.0f };
+//Triangle t1(mesh[0], mesh[1], mesh[2], p3, p0, p1, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+//Triangle t2(mesh[2], mesh[3], mesh[1], p1, p2, p3, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+//
+//Triangle t3(mesh[6], mesh[5], mesh[4], p3, p0, p1, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+//Triangle t4(mesh[4], mesh[7], mesh[6], p1, p2, p3, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+//
+//Triangle t5(mesh[7], mesh[4], mesh[0], p3, p0, p1, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+//Triangle t6(mesh[0], mesh[3], mesh[7], p1, p2, p3, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+//
+//Triangle t7(mesh[1], mesh[5], mesh[6], p3, p0, p1, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+//Triangle t8(mesh[6], mesh[2], mesh[1], p1, p2, p3, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+//
+//Triangle t9(mesh[5], mesh[1], mesh[0], p3, p0, p1, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+//Triangle t10(mesh[0], mesh[4], mesh[5], p1, p2, p3, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+//
+//Triangle t11(mesh[3], mesh[2], mesh[6], p3, p0, p1, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+//Triangle t12(mesh[6], mesh[7], mesh[3], p1, p2, p3, TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+////三角形列表
+//Triangle list1[12] = { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12 };
 
 void RenderMain()
 {
@@ -289,42 +292,187 @@ void RenderMain()
 	device->RenderTexture(TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
 	Display();
 	Sleep(33);
+
+
 }
 
 void RenderInit()
 {
+	Vertex3D *vertexList = (Vertex3D*)malloc(sizeof(Vertex3D)* 8);
+	vertexList[0].vertex = { 1, -1, 1, 1 };
+	vertexList[0].color = Color(0x00FF0000);
+	vertexList[0].normal = { 0.0, 0.0, 0.0 };
+
+	vertexList[1].vertex = { -1, -1, 1, 1 };
+	vertexList[1].color = Color(0x0000FF00);
+	vertexList[1].normal = { 0.0, 0.0, 0.0 };;
+
+	vertexList[2].vertex = { -1, 1, 1, 1 };
+	vertexList[2].color = Color(0x000000FF);
+	vertexList[2].normal = { 0.0, 0.0, 0.0 };
+
+	vertexList[3].vertex = { 1, 1, 1, 1 };
+	vertexList[3].color = Color(0x00FF0000);
+	vertexList[3].normal = { 0.0, 0.0, 0.0 };
+
+	vertexList[4].vertex = { 1, -1, -1, 1 };
+	vertexList[4].color = Color(0x0000FF00);
+	vertexList[4].normal = { 0.0, 0.0, 0.0 };
+
+	vertexList[5].vertex = { -1, -1, -1, 1 };
+	vertexList[5].color = Color(0x000000FF);
+	vertexList[5].normal = { 0.0, 0.0, 0.0 };
+
+	vertexList[6].vertex = { -1, 1, -1, 1 };
+	vertexList[6].color = Color(0x00FF0000);
+	vertexList[6].normal = { 0.0, 0.0, 0.0 };
+
+	vertexList[7].vertex = { 1, 1, -1, 1 };
+	vertexList[7].color = Color(0x0000FF00);
+	vertexList[7].normal = { 0.0, 0.0, 0.0 };
+
+	Triangle *triangleList = (Triangle*)malloc(sizeof(Triangle)* 12);
+	triangleList[0].id = 0;
+	triangleList[0].vertexList = &vertexList[0];
+	triangleList[0].index[0] = 0;
+	triangleList[0].index[1] = 1;
+	triangleList[0].index[2] = 2;
+	triangleList[0].uv[0] = { 0.0, 1.0 };
+	triangleList[0].uv[1] = { 0.0, 0.0 };
+	triangleList[0].uv[2] = { 1.0, 0.0 };
+
+	triangleList[1].id = 1;
+	triangleList[1].vertexList = &vertexList[1];
+	triangleList[1].index[0] = 2;
+	triangleList[1].index[1] = 3;
+	triangleList[1].index[2] = 1;
+	triangleList[1].uv[0] = { 1.0, 0.0 };
+	triangleList[1].uv[1] = { 1.0, 1.0 };
+	triangleList[1].uv[2] = { 0.0, 1.0 };
+
+	triangleList[2].id = 2;
+	triangleList[2].vertexList = &vertexList[2];
+	triangleList[2].index[0] = 6;
+	triangleList[2].index[1] = 5;
+	triangleList[2].index[2] = 4;
+	triangleList[2].uv[0] = { 0.0, 1.0 };
+	triangleList[2].uv[1] = { 0.0, 0.0 };
+	triangleList[2].uv[2] = { 1.0, 0.0 };
+
+	triangleList[3].id = 3;
+	triangleList[3].vertexList = &vertexList[3];
+	triangleList[3].index[0] = 4;
+	triangleList[3].index[1] = 7;
+	triangleList[3].index[2] = 6;
+	triangleList[3].uv[0] = { 1.0, 0.0 };
+	triangleList[3].uv[1] = { 1.0, 1.0 };
+	triangleList[3].uv[2] = { 0.0, 1.0 };
+
+	triangleList[4].id = 4;
+	triangleList[4].vertexList = &vertexList[4];
+	triangleList[4].index[0] = 7;
+	triangleList[4].index[1] = 4;
+	triangleList[4].index[2] = 0;
+	triangleList[4].uv[0] = { 0.0, 1.0 };
+	triangleList[4].uv[1] = { 0.0, 0.0 };
+	triangleList[4].uv[2] = { 1.0, 0.0 };
+
+	triangleList[5].id = 5;
+	triangleList[5].vertexList = &vertexList[5];
+	triangleList[5].index[0] = 0;
+	triangleList[5].index[1] = 3;
+	triangleList[5].index[2] = 7;
+	triangleList[5].uv[0] = { 1.0, 0.0 };
+	triangleList[5].uv[1] = { 1.0, 1.0 };
+	triangleList[5].uv[2] = { 0.0, 1.0 };
+
+	triangleList[6].id = 6;
+	triangleList[6].vertexList = &vertexList[6];
+	triangleList[6].index[0] = 1;
+	triangleList[6].index[1] = 5;
+	triangleList[6].index[2] = 6;
+	triangleList[6].uv[0] = { 0.0, 1.0 };
+	triangleList[6].uv[1] = { 0.0, 0.0 };
+	triangleList[6].uv[2] = { 1.0, 0.0 };
+
+	triangleList[7].id = 7;
+	triangleList[7].vertexList = &vertexList[7];
+	triangleList[7].index[0] = 6;
+	triangleList[7].index[1] = 2;
+	triangleList[7].index[2] = 1;
+	triangleList[7].uv[0] = { 1.0, 0.0 };
+	triangleList[7].uv[1] = { 1.0, 1.0 };
+	triangleList[7].uv[2] = { 0.0, 1.0 };
+
+	triangleList[8].id = 8;
+	triangleList[8].vertexList = &vertexList[8];
+	triangleList[8].index[0] = 5;
+	triangleList[8].index[1] = 1;
+	triangleList[8].index[2] = 0;
+	triangleList[8].uv[0] = { 0.0, 1.0 };
+	triangleList[8].uv[1] = { 0.0, 0.0 };
+	triangleList[8].uv[2] = { 1.0, 0.0 };
+
+	triangleList[9].id = 9;
+	triangleList[9].vertexList = &vertexList[9];
+	triangleList[9].index[0] = 0;
+	triangleList[9].index[1] = 4;
+	triangleList[9].index[2] = 5;
+	triangleList[9].uv[0] = { 1.0, 0.0 };
+	triangleList[9].uv[1] = { 1.0, 1.0 };
+	triangleList[9].uv[2] = { 0.0, 1.0 };
+
+	triangleList[10].id = 10;
+	triangleList[10].vertexList = &vertexList[10];
+	triangleList[10].index[0] = 3;
+	triangleList[10].index[1] = 2;
+	triangleList[10].index[2] = 6;
+	triangleList[10].uv[0] = { 0.0, 1.0 };
+	triangleList[10].uv[1] = { 0.0, 0.0 };
+	triangleList[10].uv[2] = { 1.0, 0.0 };
+
+	triangleList[11].id = 11;
+	triangleList[11].vertexList = &vertexList[11];
+	triangleList[11].index[0] = 6;
+	triangleList[11].index[1] = 7;
+	triangleList[11].index[2] = 3;
+	triangleList[11].uv[0] = { 1.0, 0.0 };
+	triangleList[11].uv[1] = { 1.0, 1.0 };
+	triangleList[11].uv[2] = { 0.0, 1.0 };
+
+
+	char *name = "object0";
+	Point3D objectPosition = { 1.9f, 0.5f, 4, 1 };
+	object0 = new GameObject(objectPosition, 0, 0, name, 8, vertexList, 12, triangleList);
+	object0->state = RENDER_STATE_WIREFRAME;
 	//载入纹理图
 	hTextureBitmap = (HBITMAP)LoadImage(hInst, L"102.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 	//获取纹理的像素
 	GetDIBits(screen_hdc, hTextureBitmap, 0, TEXTURE_HEIGHT, TextureBuffer, (BITMAPINFO*)&binfoTex, DIB_RGB_COLORS);
 
-	Point3D objectPosition = { 1.9f, 0.5f, 4, 1 };
+
 
 	Point3D camerPos = {0.0, 0.0f, 0, 1 };
 	Vector3D v = { 0, 1, 0.0, 0 };
 	camera = new UVNCamera(camerPos, {0,0,1}, v, 2, 4, 90, 1, SCREEN_WIDTH * 1.0f / SCREEN_HEIGHT);
 
 	device = new Device(camera, SCREEN_WIDTH, SCREEN_HEIGHT, Buffer, RENDER_STATE_WIREFRAME, 0xFFFFFFFF, 0xFFFF0000);
-
-	object1 = new Objecet(objectPosition, 12, list1, RENDER_STATE_TEXTURE);
-	object2 = new Objecet({ -2.0f, -1.5f, 5, 1 }, 12, list2, RENDER_STATE_COLOR);
-	device->AddObjectList(object1);
-	device->AddObjectList(object2);
+	device->AddObjectList(object0);
 }
 
 void RenderEnd()
 {
 	device->ClearObjectList();
-	delete object1;
-	delete object2;
+	//delete object1;
+	//delete object2;
 	delete device;
 	delete camera;
-
+	delete object0;
 }
 
 void Display()
 {
-	//将颜色数据打印到屏幕上，这下面两个函数每帧都得调用  
+	////将颜色数据打印到屏幕上，这下面两个函数每帧都得调用  
 	SetDIBits(screen_hdc, hCompatibleBitmap, 0, SCREEN_HEIGHT, Buffer, (BITMAPINFO*)&binfo, DIB_RGB_COLORS);
 	BitBlt(screen_hdc, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hCompatibleDC, 0, 0, SRCCOPY);
 }
@@ -361,16 +509,18 @@ void Input(WPARAM wParam)
 			camera->SetPosition(pos.x + 0.1f, pos.y, pos.z);
 		}
 		break;
-	case VK_NUMPAD2:
+	case VK_NUMPAD4:
 		if (camera != nullptr)
 		{
-
+			Point3D pos = camera->GetPosition();
+			camera->RotateHorizontal(-0.25f);
 		}
 		break;
-	case VK_NUMPAD8:
+	case VK_NUMPAD6:
 		if (camera != nullptr)
 		{
-
+			Point3D pos = camera->GetPosition();
+			camera->RotateHorizontal(0.25f);
 		}
 		break;
 	}

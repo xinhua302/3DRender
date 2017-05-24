@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Define">
+      <UniqueIdentifier>{24f12b20-44de-4bf2-91fa-4290d28e3ba6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Manager">
+      <UniqueIdentifier>{91149ccc-969b-4e21-a98a-4f2dbea1109e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -41,6 +47,18 @@
     </ClInclude>
     <ClInclude Include="GeometryDefine .h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Define\GeometryDefine.h">
+      <Filter>Define</Filter>
+    </ClInclude>
+    <ClInclude Include="Define\LightDefine.h">
+      <Filter>Define</Filter>
+    </ClInclude>
+    <ClInclude Include="Define\MaterialDefine.h">
+      <Filter>Define</Filter>
+    </ClInclude>
+    <ClInclude Include="Define\ColorDefine.h">
+      <Filter>Define</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

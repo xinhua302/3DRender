@@ -23,19 +23,19 @@ struct Vertex3D
 		return rgb;
 	}
 
-	float GetR()
+	double GetR()
 	{
 		UINT c = color & 0x00FF0000;
 		UINT value = c >> 16;
-		return (float)value;
+		return (double)value;
 	}
 
-	float GetG()
+	double GetG()
 	{
 		return (color & 0x0000FF00) >> 8;
 	}
 
-	float GetB()
+	double GetB()
 	{
 		return color & 0x000000FF;
 	}

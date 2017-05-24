@@ -13,5 +13,7 @@ struct Material
 	double ks;			//镜面光反射系数
 	double shininess;	//高光指数
 	UINT *texBuffer;	//纹理图
+	UINT width;
+	UINT height;
 };
 #endif

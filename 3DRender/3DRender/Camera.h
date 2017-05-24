@@ -8,7 +8,24 @@
 class UVNCamera
 {
 public:
-	void SetPosition(float x, float y, float z)
+	void RotateHorizontal(double angle)
+	{
+		Matrix4X4 m;
+		MatrixRotate(m, v.x, v.y, v.z, angle);
+		MatrixApply(n, n, m);
+		//n向量
+		VectorCross(u, v, n);
+		//重置v向量
+		VectorCross(v, n, u);
+
+		VectorNormalize(u);
+		VectorNormalize(v);
+		VectorNormalize(n);
+
+		CalculateMatCamera();
+	}
+
+	void SetPosition(double x, double y, double z)
 	{
 		this->position.x = x;
 		this->position.y = y;
@@ -27,22 +44,22 @@ public:
 		return tPos;
 	}
 
-	float GetViewDistance() const
+	double GetViewDistance() const
 	{
 		return viewDistance;
 	}
 
-	float GetFov() const
+	double GetFov() const
 	{
 		return fov;
 	}
 
-	float GetViewWidth() const
+	double GetViewWidth() const
 	{
 		return width;
 	}
 
-	float GetViewHeight() const
+	double GetViewHeight() const
 	{
 		return height;
 	}
@@ -67,12 +84,12 @@ public:
 		
 
 	UVNCamera(Point3D position, Vector3D target, Vector3D v, 
-		float nearClip, float farClip, float fov, float viewDistance, float aspectRatio)
+		double nearClip, double farClip, double fov, double viewDistance, double aspectRatio)
 		:position(position), u(u), v(v),
 		nearClip(nearClip), farClip(farClip), fov(fov), viewDistance(viewDistance), aspectRatio(aspectRatio)
 	{
 		SetTarget(target, v);
-		width = (float)(viewDistance * tan(fov *  PI / 360.0f ) * 2);
+		width = (double)(viewDistance * tan(fov *  PI / 360.0f ) * 2);
 		height = width / aspectRatio;
 	}
 	~UVNCamera()
@@ -98,13 +115,13 @@ private:
 	Vector3D v;			//v向量
 	Vector3D n;			//n向量
 
-	float fov;			//视广角
-	float nearClip;		//近裁剪面
-	float farClip;		//远裁剪面
-	float viewDistance;	//视距
+	double fov;			//视广角
+	double nearClip;		//近裁剪面
+	double farClip;		//远裁剪面
+	double viewDistance;	//视距
 
-	float aspectRatio;	//宽高比
-	float width;
-	float height;
+	double aspectRatio;	//宽高比
+	double width;
+	double height;
 };
 #endif
