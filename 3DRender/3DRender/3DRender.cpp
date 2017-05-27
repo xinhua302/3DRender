@@ -346,7 +346,7 @@ void RenderInit()
 	triangleList[1].vertexList = &vertexList[1];
 	triangleList[1].index[0] = 2;
 	triangleList[1].index[1] = 3;
-	triangleList[1].index[2] = 1;
+	triangleList[1].index[2] = 0;
 	triangleList[1].uv[0] = { 1.0, 0.0 };
 	triangleList[1].uv[1] = { 1.0, 1.0 };
 	triangleList[1].uv[2] = { 0.0, 1.0 };
