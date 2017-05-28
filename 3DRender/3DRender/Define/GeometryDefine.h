@@ -57,6 +57,7 @@ struct FinalTriange
 			{
 				Swap(vertex[i], vertex[index]);
 				Swap(uv[i], uv[index]);
+				Swap(color[i], color [index]);
 			}
 		}
 	}

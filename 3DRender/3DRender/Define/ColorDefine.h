@@ -23,10 +23,10 @@ struct Color
 
 	Color(UINT color)
 	{
-		r = double(color >> 16) / 255;
-		g = double(color >> 8) / 255;
-		b = double(color) / 255;
-		alpha = double(color >> 24) / 255;
+		r = double((color & 0x00FF0000) >> 16) / 255;
+		g = double((color & 0x0000FF00) >> 8) / 255;
+		b = double(color & 0x000000FF) / 255;
+		alpha = double((color & 0xFF000000) >> 24) / 255;
 	}
 
 	UINT Get32()
