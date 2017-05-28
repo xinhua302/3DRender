@@ -18,7 +18,7 @@ public:
 	{
 		Clear();
 		LocalToWorld();
-		//RemoveBackfaceTriangle();
+		RemoveBackfaceTriangle();
 		WorldToCamera();
 		Projection();
 		ViewTransform();
@@ -249,7 +249,7 @@ public:
 	void DrawTriangle(FinalTriange &t)
 	{
 		//是否是平底或平顶三角形
-		if (abs(t.vertex[0].y - t.vertex[1].y) <0.000001)
+		if (abs(t.vertex[0].y - t.vertex[1].y) <0.00001)
 		{
 			if (t.vertex[2].y >t.vertex[1].y)
 			{
@@ -260,7 +260,7 @@ public:
 				TopTriangle(t);
 			}
 		}
-		else if (abs(t.vertex[0].y - t.vertex[2].y) < 0.000001)
+		else if (abs(t.vertex[0].y - t.vertex[2].y) < 0.00001)
 		{
 			if (t.vertex[1].y > t.vertex[0].y )
 			{
@@ -271,7 +271,7 @@ public:
 				TopTriangle(t);
 			}
 		}
-		else if (abs(t.vertex[1].y - t.vertex[2].y) < 0.000001)
+		else if (abs(t.vertex[1].y - t.vertex[2].y) < 0.00001)
 		{
 			if (t.vertex[0].y > t.vertex[1].y)
 			{
@@ -342,7 +342,7 @@ public:
 	{
 		Vertex3D top, left, right;
 		Vector2D topUV, leftUV, rightUV;
-		if (t.vertex[0].y == t.vertex[1].y)
+		if ((int)t.vertex[0].y == (int)t.vertex[1].y)
 		{
 			top.vertex = t.vertex[2];
 			topUV = t.uv[2];
@@ -351,7 +351,7 @@ public:
 			right.vertex = t.vertex[1];
 			rightUV = t.uv[1];
 		}
-		else if (t.vertex[1].y == t.vertex[2].y)
+		else if ((int)t.vertex[1].y == (int)t.vertex[2].y)
 		{
 			top.vertex = t.vertex[0];
 			left.vertex = t.vertex[1];
@@ -448,7 +448,7 @@ public:
 	{
 		Vertex3D bottom, left, right;
 		Vector2D bottomUV, leftUV, rightUV;
-		if (t.vertex[0].y == t.vertex[1].y)
+		if ((int)t.vertex[0].y == (int)t.vertex[1].y)
 		{
 			bottom.vertex = t.vertex[2];
 			bottomUV = t.uv[2];
@@ -457,7 +457,7 @@ public:
 			right.vertex = t.vertex[1];
 			rightUV = t.uv[1];
 		}
-		else if (t.vertex[1].y == t.vertex[2].y)
+		else if ((int)t.vertex[1].y == (int)t.vertex[2].y)
 		{
 			bottom.vertex = t.vertex[0];
 			left.vertex = t.vertex[1];
@@ -577,13 +577,21 @@ public:
 		{
 			for (int j = 0; j < objecetList[i]->triangleCount; j++)
 			{
-				Vector3D v1 = objecetList[i]->triangleList[j].GetVertex(1).vertex - objecetList[i]->triangleList[j].GetVertex(0).vertex;
-				Vector3D v2 = objecetList[i]->triangleList[j].GetVertex(0).vertex - objecetList[i]->triangleList[j].GetVertex(2).vertex;
+				if (true)
+				{
+				
+					Vector3D temp1 = objecetList[i]->triangleList[j].GetVertex(1).vertex;
+					Vector3D temp2 = objecetList[i]->triangleList[j].GetVertex(0).vertex;
+					Vector3D v1 = temp1 - temp2;
+					Vector3D temp3 = objecetList[i]->triangleList[j].GetVertex(0).vertex;
+					Vector3D temp4 = objecetList[i]->triangleList[j].GetVertex(2).vertex;
+					Vector3D v2 = temp3 - temp4;
+
 				//法线
 				Vector3D normal;
 				VectorCross(normal, v1, v2);
 
-				Vector3D direction = objecetList[i]->triangleList[j].GetVertex(0).vertex - camera->GetPosition();
+				Vector3D direction = camera->GetPosition() - objecetList[i]->triangleList[j].GetVertex(0).vertex;
 
 				double dot = VectorDot(direction, normal);
 
@@ -594,6 +602,7 @@ public:
 				else
 				{
 					objecetList[i]->triangleList[j].state = TRIANGLE_FOREFACE;
+				}
 				}
 			}
 		}
@@ -623,7 +632,7 @@ public:
 			}
 			for (int j = 0; j < objecetList[i]->triangleCount; j++)
 			{
-				objecetList[i]->triangleList[i].vertexList = objecetList[i]->transVertexList;
+				objecetList[i]->triangleList[j].vertexList = objecetList[i]->transVertexList;
 			}
 		}
 	}

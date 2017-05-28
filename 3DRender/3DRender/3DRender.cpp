@@ -443,7 +443,7 @@ void RenderInit()
 
 
 	char *name = "object0";
-	Point3D objectPosition = { 1.9f, 0.5f, 4, 1 };
+	Point3D objectPosition = { 1.0, 0.0, 4, 1 };
 	object0 = new GameObject(objectPosition, 0, 0, name, 8, vertexList, 12, triangleList);
 	object0->state = RENDER_STATE_WIREFRAME;
 	//ÔØÈëÎÆÀíÍ¼
