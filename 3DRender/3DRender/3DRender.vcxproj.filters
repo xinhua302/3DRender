@@ -45,9 +45,6 @@
     <ClInclude Include="Camera.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="GeometryDefine .h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Define\GeometryDefine.h">
       <Filter>Define</Filter>
     </ClInclude>
