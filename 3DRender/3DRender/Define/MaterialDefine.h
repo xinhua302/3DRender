@@ -1,6 +1,7 @@
 #ifndef __MATERIALDEFINE_H
 #define __MATERIALDEFINE_H
 #include "../3DMath.h"
+#include "Define/ColorDefine.h"
 
 struct Material
 {
@@ -15,6 +16,8 @@ struct Material
 	UINT *texBuffer;	//Œ∆¿ÌÕº
 	double width;
 	double height;
+	Color color;
+	Color ra, rd, rs;
 
 	Material(UINT *tex, double width, double height)
 	{

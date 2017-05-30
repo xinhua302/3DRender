@@ -242,35 +242,35 @@ void RenderInit()
 {
 	Vertex3D *vertexList = (Vertex3D*)malloc(sizeof(Vertex3D)* 8);
 	vertexList[0].vertex = { 1, -1, 1, 1 };
-	vertexList[0].color = Color(0x00FF0000);
+	vertexList[0].color = Color(0xFFFFFFFF);
 	vertexList[0].normal = { 0.0, 0.0, 0.0 };
 
 	vertexList[1].vertex = { -1, -1, 1, 1 };
-	vertexList[1].color = Color(0x0000FF00);
+	vertexList[1].color = Color(0xFFFFFFFF);
 	vertexList[1].normal = { 0.0, 0.0, 0.0 };;
 
 	vertexList[2].vertex = { -1, 1, 1, 1 };
-	vertexList[2].color = Color(0x000000FF);
+	vertexList[2].color = Color(0xFFFFFFFF);
 	vertexList[2].normal = { 0.0, 0.0, 0.0 };
 
 	vertexList[3].vertex = { 1, 1, 1, 1 };
-	vertexList[3].color = Color(0x00FF0000);
+	vertexList[3].color = Color(0xFFFFFFFF);
 	vertexList[3].normal = { 0.0, 0.0, 0.0 };
 
 	vertexList[4].vertex = { 1, -1, -1, 1 };
-	vertexList[4].color = Color(0x0000FF00);
+	vertexList[4].color = Color(0xFFFFFFFF);
 	vertexList[4].normal = { 0.0, 0.0, 0.0 };
 
 	vertexList[5].vertex = { -1, -1, -1, 1 };
-	vertexList[5].color = Color(0x000000FF);
+	vertexList[5].color = Color(0xFFFFFFFF);
 	vertexList[5].normal = { 0.0, 0.0, 0.0 };
 
 	vertexList[6].vertex = { -1, 1, -1, 1 };
-	vertexList[6].color = Color(0x00FF0000);
+	vertexList[6].color = Color(0xFFFFFFFF);
 	vertexList[6].normal = { 0.0, 0.0, 0.0 };
 
 	vertexList[7].vertex = { 1, 1, -1, 1 };
-	vertexList[7].color = Color(0x0000FF00);
+	vertexList[7].color = Color(0xFFFFFFFF);
 	vertexList[7].normal = { 0.0, 0.0, 0.0 };
 
 	Triangle *triangleList = (Triangle*)malloc(sizeof(Triangle)* 12);
@@ -391,7 +391,19 @@ void RenderInit()
 	hTextureBitmap = (HBITMAP)LoadImage(hInst, L"102.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 	//获取纹理的像素
 	GetDIBits(screen_hdc, hTextureBitmap, 0, TEXTURE_HEIGHT, TextureBuffer, (BITMAPINFO*)&binfoTex, DIB_RGB_COLORS);
+	//材质
 	Material *m = new Material(TextureBuffer, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+	m->id = 0;
+	m->color = Color(0xFFFFFFFF);
+	m->ka = 0.1;
+	m->kd = 0.2;
+	m->ks = 0.1;
+	m->shininess = 2;
+	m->ra = Color(0xFFFFFFFF)*m->ka;
+	m->rd = Color(0xFFFFFFFF)*m->kd;
+	m->rs = Color(0xFFFFFFFF)*m->ks;
+
+	
 	for (int i = 0; i < 12; i++)
 	{
 		triangleList[i].material = m;
@@ -399,10 +411,11 @@ void RenderInit()
 
 	Point3D camerPos = {0.0, 0.0f, 0, 1 };
 	Vector3D v = { 0, 1, 0.0, 0 };
-	camera = new UVNCamera(camerPos, {0,0,1}, v, 2, 4, 90, 1, SCREEN_WIDTH * 1.0f / SCREEN_HEIGHT);
+	camera = new UVNCamera(camerPos, objectPosition, v, 2, 4, 90, 1, SCREEN_WIDTH * 1.0f / SCREEN_HEIGHT);
 
 	device = new Device(camera, SCREEN_WIDTH, SCREEN_HEIGHT, Buffer, RENDER_STATE_WIREFRAME, 0xFFFFFFFF, 0xFFFF0000);
 	device->AddObjectList(object0);
+	device->Init();
 }
 
 void RenderEnd()

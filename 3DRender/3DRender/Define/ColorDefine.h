@@ -19,6 +19,7 @@ struct Color
 		this->r = r;
 		this->g = g;
 		this->b = b;
+		this->alpha = 0;
 	}
 
 	Color(UINT color)
@@ -29,9 +30,27 @@ struct Color
 		alpha = double((color & 0xFF000000) >> 24) / 255;
 	}
 
+	Color(double r, double g, double b, double a)
+	{
+		this->r = r;
+		this->g = g;
+		this->b = b;
+		this->alpha = a;
+	}
+
 	UINT Get32()
 	{
 		return (UINT(r * 255) << 16) + (UINT(g * 255) << 8) + (UINT(b * 255));
+	}
+
+	Color operator*(const double x)
+	{
+		return Color{ this->r * x, this->g* x, this->b * x, 0 };
+	}
+
+	Color operator+(const Color &color)
+	{
+		return Color{ this->r + color.r, this->g + color.g, this->b + color.b, 0 };
 	}
 };
 #endif

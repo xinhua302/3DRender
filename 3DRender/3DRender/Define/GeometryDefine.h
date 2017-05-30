@@ -78,6 +78,7 @@ struct Triangle
 	Vertex3D* vertexList;	//顶点列表
 	int index[3];			//索引
 	Vector2D uv[3];		//纹理坐标
+	Color color[3];
 	Material *material;		//材质
 
 	Vertex3D GetVertex(int i) const
