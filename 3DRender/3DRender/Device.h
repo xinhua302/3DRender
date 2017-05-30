@@ -867,7 +867,7 @@ private:
 		{
 			PointLight *pointLight = new PointLight();
 			pointLight->color = Color(0xFFFFFFFF);
-			pointLight->position = Vector3D{ 5.0, 0.0, 0.0 };
+			pointLight->position = Vector3D{ 2.0, 2.0, 4.0 };
 			pointLight->kc = 0.1;
 			pointLight->kl = 0.1;
 			pointLight->kq = 0.1;

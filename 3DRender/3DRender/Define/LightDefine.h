@@ -37,15 +37,15 @@ public:
 
 	Color CalculateColor(const Vertex3D &vertex, const Material &material, const Point3D &objectPos)
 	{
-		Vector3D l = position- vertex.vertex;
-		
-		double d = CalculateVector3DLength(l);
-
-		double dp = VectorDot(vertex.normal, l);
+		//计算环境光
 		double r = material.ra.r;
 		double g = material.ra.g;
 		double b = material.ra.b;
 
+		//计算散射光
+		Vector3D l = position- vertex.vertex;		
+		double d = CalculateVector3DLength(l);
+		double dp = VectorDot(vertex.normal, l);
 		if (dp > 0)
 		{
 			double atten = kc + kl * d + kq *d * d;
@@ -53,8 +53,9 @@ public:
 			g += material.rd.g * dp / atten;
 			b += material.rd.b * dp / atten;
 		}
-		VectorNormalize(l);
 
+		//计算镜面高光
+		VectorNormalize(l);
 		double x = l.x - 2 * VectorDot(l, vertex.normal) * vertex.normal.x;
 		double y = l.y - 2 * VectorDot(l, vertex.normal) * vertex.normal.y;
 		double z = l.z - 2 * VectorDot(l, vertex.normal) * vertex.normal.z;
@@ -68,6 +69,7 @@ public:
 			b += material.rs.b * is;
 		}
 
+		//判断是否溢出
 		r = r > 1.0 ? 1.0 : r;
 		g = g > 1.0 ? 1.0 : g;
 		b = b > 1.0 ? 1.0 : b;
