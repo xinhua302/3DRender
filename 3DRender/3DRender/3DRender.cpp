@@ -398,7 +398,7 @@ void RenderInit()
 	m->ka = 0.1;
 	m->kd = 0.2;
 	m->ks = 0.1;
-	m->shininess = 2;
+	m->shininess = 1.2;
 	m->ra = Color(0xFFFFFFFF)*m->ka;
 	m->rd = Color(0xFFFFFFFF)*m->kd;
 	m->rs = Color(0xFFFFFFFF)*m->ks;
@@ -416,6 +416,27 @@ void RenderInit()
 	device = new Device(camera, SCREEN_WIDTH, SCREEN_HEIGHT, Buffer, RENDER_STATE_WIREFRAME, 0xFFFFFFFF, 0xFFFF0000);
 	device->AddObjectList(object0);
 	device->Init();
+	//环境光源
+	Light *ambientLight = device->AddLight(LIGHT_TYPE_AMBIENT, 0xFFFFFFFF);
+	//点光源
+	Light *pointLight = device->AddLight(LIGHT_TYPE_POINT, 0xFFFFFFFF);
+	((PointLight*)pointLight)->position = { 2.0, 5.0, 4.0 };
+	((PointLight*)pointLight)->kc = 0.01;
+	((PointLight*)pointLight)->kl = 0.03;
+	((PointLight*)pointLight)->kq = 0.00;
+	//方向光源
+	Light *directionLight = device->AddLight(LIGHT_TYPE_DIRECTION, 0xFFFFFFFF);
+	((DirectionLight*)directionLight)->direction = { -1.0, -1.0, -1.0 };
+	//聚光灯
+	Light *spotLight = device->AddLight(LIGHT_TYPE_SPOT, 0xFFFFFFFF);
+	((SpotLight*)spotLight)->direction = { 0.0, 1.0, 0.0 };
+	((SpotLight*)spotLight)->pf = 1.0;
+	((SpotLight*)spotLight)->position = { 2.0, -2.0, 4.0 };
+	((SpotLight*)spotLight)->SetInAngle(20.0);
+	((SpotLight*)spotLight)->SetOutAngle(30.0);
+	((SpotLight*)spotLight)->kc = 0.01;
+	((SpotLight*)spotLight)->kl = 0.03;
+	((SpotLight*)spotLight)->kq = 0.00;
 }
 
 void RenderEnd()

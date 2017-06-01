@@ -16,7 +16,7 @@ class Device
 public:
 	void Init()
 	{
-		lightList[lightCount++] = CreateLight(LIGHT_TYPE_POINT);
+
 	}
 	//渲染主函数
 	void Render()
@@ -672,7 +672,7 @@ public:
 		finalTriangleCount = 0;
 	}
 
-	//相机变换ss
+	//相机变换
 	void WorldToCamera()
 	{
 		for (int i = 0; i < objectListCount; i++)
@@ -803,6 +803,14 @@ public:
 		}
 	}
 
+	//添加光源
+	Light *AddLight(int type, UINT color)
+	{
+		Light *light = CreateLight(type, color);
+		lightList[lightCount++] = light;
+		return light;
+	}
+
 private:
 	void Init(UVNCamera *camera, int width, int height, void *frameBuffer, int renderState, UINT foreground, UINT background)
 	{
@@ -842,6 +850,7 @@ private:
 		lightCount = 0;
 	}
 
+	//深度检测
 	bool TestZ(double x, double y, double z)
 	{
 		if (x < clipMinX || x >= clipMaxX || y < clipMinY || y >= clipMaxY)
@@ -861,28 +870,35 @@ private:
 	}
 	
 	//创建光源
-	Light *CreateLight(int type)
+	Light *CreateLight(int type, UINT color)
 	{
 		if (type == LIGHT_TYPE_POINT)
 		{
 			PointLight *pointLight = new PointLight();
-			pointLight->color = Color(0xFFFFFFFF);
-			pointLight->position = Vector3D{ 2.0, 2.0, 4.0 };
-			pointLight->kc = 0.1;
-			pointLight->kl = 0.1;
-			pointLight->kq = 0.1;
+			pointLight->color = Color(color);
 			return pointLight;
 		}
 		else if (type == LIGHT_TYPE_DIRECTION)
 		{
-			return new DirectionLight();
+			DirectionLight *directionLight = new DirectionLight();
+			directionLight->color = Color(color);
+			return directionLight;
+		}
+		else if (type == LIGHT_TYPE_SPOT)
+		{
+			SpotLight *spotLight = new SpotLight();
+			spotLight->color = Color(color); 
+			return spotLight;
 		}
 		else
 		{
-			return new SpotLight();
+			Light *ambientLight = new Light();
+			ambientLight->color = Color(color);
+			return ambientLight;
 		}
 	}
 
+	//计算顶点光照
 	void CalculateLight()
 	{
 		for (int i = 0; i < objectListCount; i++)
@@ -897,7 +913,12 @@ private:
 						*objecetList[i]->triangleList[0].material,
 						camera->GetPosition());
 					color = color + theColor;
+
 				}
+				//判断是否溢出
+				color.r = color.r > 1.0 ? 1.0 : color.r;
+				color.g = color.g > 1.0 ? 1.0 : color.g;
+				color.b = color.b > 1.0 ? 1.0 : color.b;
 				objecetList[i]->transVertexList[j].color.r *= color.r;
 				objecetList[i]->transVertexList[j].color.g *= color.g;
 				objecetList[i]->transVertexList[j].color.b *= color.b;
